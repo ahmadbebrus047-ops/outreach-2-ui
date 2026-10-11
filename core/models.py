@@ -49,6 +49,9 @@ class Prospect:
     category: str = ""         # PROSPECT_CATEGORIES key this row was fetched under
     contact_name: str = ""     # person the email belongs to (org rows: e.g. practice manager)
     contact_title: str = ""
+    apollo_id: str = ""        # Apollo person id, to match webhook phone deliveries
+    contact_phone: str = ""    # phone revealed by Apollo (arrives later via webhook)
+    phone_status: str = ""     # "", "pending", "found", "not_found"
 
     def __post_init__(self) -> None:
         if not self.dedup_key:

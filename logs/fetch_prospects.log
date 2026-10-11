@@ -120,3 +120,8 @@ TypeError: fake_fetch_state() got an unexpected keyword argument 'taxonomy'
 2026-09-15 21:54:07,044 | INFO    | fetch_prospects | Fetching TX with taxonomy='Family Medicine'
 2026-10-11 10:33:24,982 | INFO    | fetch_prospects | Fetching TX with taxonomy='Marriage & Family Therapist'
 2026-10-11 10:33:36,577 | INFO    | fetch_prospects | State TX: 999 new prospects appended.
+2026-10-11 11:17:24,089 | INFO    | fetch_prospects | Fetching RI for category 'Multi-Specialty Group'
+2026-10-11 11:17:26,556 | INFO    | fetch_prospects | Fetching RI for category 'Registered Dietitian'
+2026-10-11 11:17:32,959 | INFO    | fetch_prospects | Fetching RI for category 'Family Nurse Practitioner'
+2026-10-11 11:17:47,838 | INFO    | fetch_prospects | Fetching RI for category 'Family Medicine'
+2026-10-11 11:18:01,980 | INFO    | fetch_prospects | State RI: 2159 new prospects appended.

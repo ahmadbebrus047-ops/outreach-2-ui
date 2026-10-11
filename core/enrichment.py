@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import os
 import re
+import time
 from dataclasses import dataclass
 from typing import Optional, Protocol
 
@@ -22,6 +23,8 @@ class EmailResult:
     confidence: int = 0
     contact_name: str = ""
     contact_title: str = ""
+    apollo_id: str = ""
+    phone_requested: bool = False   # phone will arrive later via webhook
 
 
 class EmailEnricher(Protocol):
@@ -86,6 +89,12 @@ class HunterEnricher:
         return EmailResult(status="not_found")
 
 
+class ApolloSearchError(Exception):
+    def __init__(self, msg: str, rate_limited: bool = False):
+        super().__init__(msg)
+        self.rate_limited = rate_limited
+
+
 class ApolloEnricher:
     """Apollo.io email enrichment (2026 API).
 
@@ -105,6 +114,7 @@ class ApolloEnricher:
 
     def __init__(self, api_key: Optional[str] = None, reveal_personal: bool | None = None):
         self.api_key = api_key or self._cfg.APOLLO_API_KEY
+        self._last_search = 0.0
         if reveal_personal is None:
             reveal_personal = os.getenv("APOLLO_REVEAL_PERSONAL", "0") == "1"
         self.reveal_personal = reveal_personal
@@ -141,17 +151,21 @@ class ApolloEnricher:
     def _result_from_person(person: Optional[dict]) -> EmailResult:
         person = person or {}
         email = person.get("email", "") or ""
+        common = dict(
+            source="apollo",
+            contact_name=person.get("name") or "",
+            contact_title=person.get("title") or "",
+            apollo_id=person.get("id") or "",
+        )
         if not email:
-            return EmailResult(status="not_found", source="apollo")
+            return EmailResult(status="not_found", **common)
         raw_status = (person.get("email_status") or "").lower()
         good = raw_status in ("verified", "likely to engage")
         return EmailResult(
             email=email,
             status="found" if good else "unverified",
-            source="apollo",
             confidence=90 if good else 50,
-            contact_name=person.get("name") or "",
-            contact_title=person.get("title") or "",
+            **common,
         )
 
     def _headers(self) -> dict:
@@ -171,6 +185,7 @@ class ApolloEnricher:
             return EmailResult(status="not_found", source="apollo")
         payload = dict(detail)
         payload["reveal_personal_emails"] = self.reveal_personal
+        payload["reveal_phone_number"] = False  # email only: never spend phone credits
         try:
             r = requests.post(
                 self.MATCH_URL, json=payload, headers=self._headers(), timeout=30
@@ -196,28 +211,48 @@ class ApolloEnricher:
         tail = tail.strip("*")
         return last.lower().startswith(head) and last.lower().endswith(tail)
 
+    def _people_search(self, payload: dict, who: str) -> list[dict]:
+        """POST to People Search, paced under Apollo's per-minute limit.
+
+        Raises ApolloSearchError on any failure, so the caller can leave the row
+        retryable instead of recording a false "no email".
+        """
+        wait = self._cfg.APOLLO_SEARCH_PAUSE - (time.monotonic() - self._last_search)
+        if wait > 0:
+            time.sleep(wait)
+        self._last_search = time.monotonic()
+        try:
+            r = requests.post(
+                self._cfg.APOLLO_SEARCH_URL, json=payload, headers=self._headers(), timeout=30
+            )
+        except requests.RequestException as exc:
+            raise ApolloSearchError(str(exc)) from exc
+        if r.status_code == 429:
+            log.warning("Apollo search rate limit hit at %s", who)
+            raise ApolloSearchError("rate limited", rate_limited=True)
+        if r.status_code != 200:
+            log.warning("Apollo search failed for %s: HTTP %s %s", who, r.status_code, r.text[:200])
+            raise ApolloSearchError(f"HTTP {r.status_code}")
+        try:
+            return r.json().get("people") or []
+        except ValueError as exc:
+            raise ApolloSearchError("bad JSON") from exc
+
     def _search_person(self, prospect: Prospect) -> Optional[dict]:
         """Resolve an individual to an Apollo person via People Search.
 
         Returns the matching person dict (with `id` and `has_email`), or None.
         Search costs no credits; only a later bulk_match that returns an email does.
+        Searches statewide: Apollo's city often differs from the NPPES address.
         """
         first, last = self._split_name(prospect)
         if not (first and last):
             return None
-        payload: dict = {"q_keywords": f"{first} {last}", "per_page": 5}
+        payload: dict = {"q_keywords": f"{first} {last}", "per_page": 10}
         state = self._cfg.STATE_NAMES.get(prospect.state.upper(), prospect.state)
-        if prospect.city:
-            payload["person_locations"] = [f"{prospect.city.title()}, {state}"]
-        try:
-            r = requests.post(
-                self._cfg.APOLLO_SEARCH_URL, json=payload, headers=self._headers(), timeout=30
-            )
-            r.raise_for_status()
-            people = r.json().get("people") or []
-        except (requests.RequestException, ValueError) as exc:
-            log.warning("Apollo search failed for %s: %s", prospect.name, exc)
-            return None
+        if state:
+            payload["person_locations"] = [state]
+        people = self._people_search(payload, prospect.name)
         for person in people:
             if self._same_person(person, first, last) and self._is_healthcare(person):
                 return person
@@ -285,15 +320,7 @@ class ApolloEnricher:
         state = self._cfg.STATE_NAMES.get(prospect.state.upper(), prospect.state)
         if state:
             payload["person_locations"] = [state]
-        try:
-            r = requests.post(
-                self._cfg.APOLLO_SEARCH_URL, json=payload, headers=self._headers(), timeout=30
-            )
-            r.raise_for_status()
-            people = r.json().get("people") or []
-        except (requests.RequestException, ValueError) as exc:
-            log.warning("Apollo org search failed for %s: %s", prospect.name, exc)
-            return None
+        people = self._people_search(payload, prospect.name)
 
         want = self._org_tokens(prospect.name)
         best, best_rank = None, len(self._ORG_TITLES)
@@ -313,24 +340,47 @@ class ApolloEnricher:
 
     # -- bulk (up to 10 per call) -------------------------------------------
 
-    def find_emails_bulk(self, prospects: list[Prospect]) -> list[EmailResult]:
+    @staticmethod
+    def _has_phone(person: dict) -> bool:
+        # Search reports "Yes", "Maybe: ...", or a falsy value.
+        v = person.get("has_direct_phone")
+        return bool(v) and str(v).lower() not in ("no", "false")
+
+    def find_emails_bulk(self, prospects: list[Prospect], want_phone: bool = False) -> list[EmailResult]:
         """Enrich a batch of prospects. Returns results aligned to input order.
 
         Individuals are first resolved with People Search (free). Only people
-        Apollo says have an email are sent to bulk_match, so no-match rows
-        never reach the paid endpoint. Splits into chunks of BULK_SIZE (10).
+        Apollo says have an email (or, with `want_phone`, a phone) are sent to
+        bulk_match, so no-match rows never reach the paid endpoint. Splits
+        into chunks of BULK_SIZE (10).
         """
+        want_phone = want_phone and bool(self._cfg.APOLLO_PHONE_WEBHOOK_BASE)
         if not self.api_key:
             return [EmailResult(status="not_found", source="apollo") for _ in prospects]
 
         results: list[Optional[EmailResult]] = [None] * len(prospects)
         pending: list[tuple[int, dict]] = []   # (index, bulk_match detail)
+        rate_limited = False
         for idx, p in enumerate(prospects):
             detail = self._detail_for(p)
             if self._cfg.APOLLO_SEARCH_ENABLED:
-                person = (self._search_person(p) if p.entity_type == "individual"
-                          else self._search_org_contact(p))
-                if person is None or not person.get("has_email"):
+                if rate_limited:
+                    # Leave the rest retryable rather than burning more requests.
+                    results[idx] = EmailResult(status="error", source="apollo: rate limited")
+                    continue
+                try:
+                    person = (self._search_person(p) if p.entity_type == "individual"
+                              else self._search_org_contact(p))
+                except ApolloSearchError as exc:
+                    rate_limited = exc.rate_limited
+                    results[idx] = EmailResult(
+                        status="error",
+                        source="apollo: rate limited" if exc.rate_limited else "apollo: search failed",
+                    )
+                    continue
+                worth_it = person is not None and (
+                    person.get("has_email") or (want_phone and self._has_phone(person)))
+                if not worth_it:
                     results[idx] = EmailResult(status="not_found", source="apollo")
                     continue
                 detail = {"id": person["id"]}
@@ -341,20 +391,28 @@ class ApolloEnricher:
 
         for start in range(0, len(pending), self.BULK_SIZE):
             batch = pending[start : start + self.BULK_SIZE]
-            matched = self._bulk_match([d for _, d in batch])
+            matched = self._bulk_match([d for _, d in batch], want_phone)
             for (idx, _), res in zip(batch, matched):
                 results[idx] = res
 
         return results  # type: ignore[return-value]
 
-    def _bulk_match(self, details: list[dict]) -> list[EmailResult]:
+    def _bulk_match(self, details: list[dict], want_phone: bool = False) -> list[EmailResult]:
         results: list[EmailResult] = []
         for start in range(0, len(details), self.BULK_SIZE):
             chunk = details[start : start + self.BULK_SIZE]
             payload = {
                 "details": chunk,
                 "reveal_personal_emails": self.reveal_personal,
+                # Phone reveals cost extra credits and Apollo only delivers them
+                # later to a public webhook, so request them only when asked.
+                "reveal_phone_number": want_phone,
             }
+            if want_phone:
+                payload["webhook_url"] = (
+                    f"{self._cfg.APOLLO_PHONE_WEBHOOK_BASE}/api/apollo-webhook/"
+                    f"{self._cfg.APOLLO_WEBHOOK_SECRET}"
+                )
             try:
                 r = requests.post(
                     self.BULK_MATCH_URL,
@@ -374,7 +432,9 @@ class ApolloEnricher:
             # Apollo returns `matches` aligned to `details` order; pad if short.
             for i in range(len(chunk)):
                 person = matches[i] if i < len(matches) else None
-                results.append(self._result_from_person(person))
+                res = self._result_from_person(person)
+                res.phone_requested = want_phone and bool(res.apollo_id)
+                results.append(res)
 
         return results
 

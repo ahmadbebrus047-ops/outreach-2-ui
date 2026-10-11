@@ -47,6 +47,32 @@ if _stale:
 from core.repository import ProspectRepository
 ProspectRepository()
 
+_LOCAL_HOSTS = {"localhost", "127.0.0.1", "[::1]"}
+
+
+@app.before_request
+def _local_only():
+    """When a public tunnel forwards to this app (for Apollo phone webhooks),
+    expose only the secret webhook path -- never the console or its API,
+    which would let anyone spend Apollo credits."""
+    host = request.host.rsplit(":", 1)[0].lower()
+    if host in _LOCAL_HOSTS:
+        return None
+    if request.path == f"/api/apollo-webhook/{config.APOLLO_WEBHOOK_SECRET}":
+        return None
+    return Response("Not found", status=404)
+
+
+@app.route("/api/apollo-webhook/<secret>", methods=["POST"])
+def api_apollo_webhook(secret: str):
+    """Apollo posts revealed phone numbers here, some time after bulk_match."""
+    if secret != config.APOLLO_WEBHOOK_SECRET:
+        return Response("Not found", status=404)
+    payload = request.get_json(silent=True)
+    log.info("Apollo webhook body: %s", str(payload)[:2000])
+    n = apollo_enrich.queue_phone_webhook(payload or {})
+    return jsonify({"ok": True, "people": n})
+
 
 # Comprehensive taxonomy_description values the user can pick in the UI.
 # NPPES matches these EXACTLY (case + spelling), so the UI offers them as a
@@ -75,6 +101,7 @@ def api_config():
             "cms_enrich_enabled": config.CMS_ENRICH_ENABLED,
             "apollo_bulk_size": config.APOLLO_BULK_SIZE,
             "prospect_categories": list(config.PROSPECT_CATEGORIES),
+            "phone_ready": bool(config.APOLLO_PHONE_WEBHOOK_BASE),
         }
     )
 
@@ -224,8 +251,8 @@ def api_export():
     import io
 
     rows = apollo_enrich.list_rows(bucket="fetched", category=request.args.get("category", ""))
-    cols = ["name", "contact_name", "contact_title", "email", "category", "taxonomy",
-            "city", "state", "phone", "npi"]
+    cols = ["name", "contact_name", "contact_title", "email", "contact_phone", "category",
+            "taxonomy", "city", "state", "phone", "npi"]
     buf = io.StringIO()
     writer = csv.DictWriter(buf, fieldnames=cols, extrasaction="ignore")
     writer.writeheader()
@@ -242,7 +269,8 @@ def api_enrich():
     if not isinstance(indices, list):
         return jsonify({"ok": False, "error": "indices must be a list"}), 400
     try:
-        result = apollo_enrich.enrich_selected_rows(indices)
+        want_phone = bool(data.get("want_phone")) and bool(config.APOLLO_PHONE_WEBHOOK_BASE)
+        result = apollo_enrich.enrich_selected_rows(indices, want_phone=want_phone)
     except Exception as exc:  # noqa: BLE001
         log.exception("Enrichment failed")
         return jsonify({"ok": False, "error": str(exc)}), 500

@@ -121,6 +121,14 @@
   .dot.error { background: #ef4444; }
   @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
 
+  .fetch-what { display: inline-flex; gap: 12px; align-items: center; font-size: 12.5px; color: var(--ink-dim);
+    border: 1px solid var(--line); border-radius: var(--radius); padding: 0 10px; height: 30px; }
+  .fetch-what label { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
+  .fetch-what label.off { color: var(--ink-faint); cursor: help; }
+  .fetch-what input { width: 13px; height: 13px; }
+  td .ph { font-family: var(--mono); font-size: 12px; color: var(--ink-dim); margin-top: 2px; }
+  .pill.pending { background: var(--amber-soft); color: var(--amber); }
+
   /* ---- multi-select ---- */
   .ms { position: relative; max-width: 420px; }
   .ms-btn {
@@ -245,8 +253,8 @@
     <!-- ============ STEP 1 ============ -->
     <section id="view-1" class="view">
       <h2 class="section">Fetch prospects by state</h2>
-      <p class="hint">Pull providers from the NPPES registry (with Medicare enrollment joined in) into
-        <span class="mono">data/prospects.csv</span>. Re-fetching a state is safe; rows are de-duplicated.</p>
+      <p class="hint">Pick one or more categories, select states, and fetch. Providers come from the NPPES registry
+        (with Medicare enrollment joined in) into <span class="mono">data/prospects.csv</span>. Re-fetching is safe; rows are de-duplicated.</p>
 
       <div class="panel">
         <h3>Categories to fetch</h3>
@@ -269,7 +277,7 @@
       </div>
 
       <div class="toolbar">
-        <button class="btn small" id="sel-all">Select all remaining</button>
+        <button class="btn small" id="sel-all">Select all states</button>
         <button class="btn small ghost" id="sel-none">Clear</button>
         <span class="selcount" id="state-selcount">0 selected</span>
         <span class="grow"></span>
@@ -323,6 +331,10 @@
               <button class="btn small" id="pick-10">Select 10</button>
               <button class="btn small" id="pick-50">Select 50</button>
               <button class="btn small ghost" id="rows-clear">Clear</button>
+              <span class="fetch-what">
+                <label title="Work email — always requested (~1 credit per email found)"><input type="checkbox" checked disabled> Email</label>
+                <label id="phone-opt"><input type="checkbox" id="want-phone"> Phone</label>
+              </span>
               <button class="btn primary" id="enrich-selected" disabled>Find emails</button>
             </div>
             <div class="tablewrap">
@@ -336,7 +348,7 @@
                 <tbody id="rows-body"></tbody>
               </table>
             </div>
-            <div class="tfoot" id="rows-meta"></div>
+            <div class="tfoot"><span id="rows-meta"></span><span style="float:right">Apollo search limit: 50/min · 200/hour · 600/day (1 search per row)</span></div>
           </div>
         </div>
       </div>
@@ -379,29 +391,49 @@ async function loadConfig() {
     ks.textContent = c.apollo_key_set ? 'Apollo connected' : 'Apollo: no key';
     ks.className = 'keystate ' + (c.apollo_key_set ? 'on' : 'off');
     $('#apollo-warning').style.display = c.apollo_key_set ? 'none' : 'block';
+    fetchCategories = c.prospect_categories || [];
+    renderCatMs();
+    const opt = $('#phone-opt'), cb = $('#want-phone');
+    cb.disabled = !c.phone_ready;
+    opt.classList.toggle('off', !c.phone_ready);
+    opt.title = c.phone_ready
+      ? 'Also reveal phone numbers. Costs extra Apollo (mobile) credits; numbers arrive a few minutes later.'
+      : 'Phone needs a public webhook address. Set APOLLO_PHONE_WEBHOOK_BASE in core/config.py and restart (see README).';
   } catch(e) { toast('Config load failed: ' + e.message, 'err'); }
 }
 
 /* =================== STEP 1 =================== */
-async function loadTaxonomyHints() {
-  try {
-    const d = await api('/api/taxonomy-hints');
-    const dl = $('#taxonomy-list'); dl.innerHTML = '';
-    d.hints.forEach(h => { if (h) { const o = document.createElement('option'); o.value = h; dl.appendChild(o); } });
-    $('#taxonomy-input').value = d.current || '';
-    renderTaxonomyCurrent(d.current || '');
-  } catch(e) {}
+/* ---- category multi-select ---- */
+let fetchCategories = [];            // all options, from /api/config
+const chosenCats = new Set();
+function renderCatMs() {
+  const menu = $('#cat-ms-menu');
+  const all = fetchCategories.length && fetchCategories.every(c => chosenCats.has(c));
+  menu.innerHTML =
+    `<label class="ms-opt ms-all"><input type="checkbox" data-all ${all ? 'checked' : ''}> Select all</label>` +
+    fetchCategories.map(c => `<label class="ms-opt"><input type="checkbox" data-cat="${esc(c)}" ${chosenCats.has(c) ? 'checked' : ''}> ${esc(c)}</label>`).join('');
+  const n = chosenCats.size;
+  $('#cat-ms-label').textContent = !n ? 'Select categories' : all ? 'All categories' : n === 1 ? [...chosenCats][0] : `${n} categories selected`;
+  $('#cat-chips').innerHTML = [...chosenCats].map(c => `<span class="chip">${esc(c)}<button data-rm="${esc(c)}" title="Remove">×</button></span>`).join('');
+  updateStateSel();
 }
-function renderTaxonomyCurrent(v) {
-  $('#taxonomy-current').textContent = v ? ('Active filter: ' + v) : 'Active filter: none (all providers)';
-}
-$('#save-taxonomy').addEventListener('click', async () => {
-  try {
-    const v = $('#taxonomy-input').value.trim();
-    const d = await api('/api/taxonomy', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({taxonomy: v})});
-    renderTaxonomyCurrent(d.nppes_taxonomy);
-    toast('Filter applied');
-  } catch(e) { toast('Failed: ' + e.message, 'err'); }
+$('#cat-ms-btn').addEventListener('click', e => {
+  e.stopPropagation();
+  const open = $('#cat-ms-menu').hidden;
+  $('#cat-ms-menu').hidden = !open; $('#cat-ms').classList.toggle('open', open);
+});
+document.addEventListener('click', e => {
+  if (!e.target.closest('#cat-ms')) { $('#cat-ms-menu').hidden = true; $('#cat-ms').classList.remove('open'); }
+});
+$('#cat-ms-menu').addEventListener('change', e => {
+  const cb = e.target;
+  if (cb.dataset.all !== undefined) { cb.checked ? fetchCategories.forEach(c => chosenCats.add(c)) : chosenCats.clear(); }
+  else cb.checked ? chosenCats.add(cb.dataset.cat) : chosenCats.delete(cb.dataset.cat);
+  renderCatMs();
+});
+$('#cat-chips').addEventListener('click', e => {
+  const b = e.target.closest('[data-rm]'); if (!b) return;
+  chosenCats.delete(b.dataset.rm); renderCatMs();
 });
 
 const selectedStates = new Set();
@@ -429,8 +461,9 @@ function renderStates() {
   });
 }
 function updateStateSel() {
-  $('#state-selcount').textContent = selectedStates.size + ' selected';
-  $('#fetch-selected').disabled = selectedStates.size === 0;
+  $('#state-selcount').textContent = selectedStates.size + ' state' + (selectedStates.size === 1 ? '' : 's') + ' selected';
+  $('#fetch-selected').disabled = selectedStates.size === 0 || chosenCats.size === 0;
+  $('#fetch-selected').title = chosenCats.size === 0 ? 'Pick at least one category first' : '';
 }
 function renderTracker(sum) {
   $('#t-total-prospects').textContent = fmt(sum.total_prospects);
@@ -453,28 +486,18 @@ async function refreshStates() {
   } catch(e) { toast('States load failed: ' + e.message, 'err'); }
 }
 $('#sel-all').addEventListener('click', () => {
-  statesData.forEach(s => { if (s.status !== 'done' && !liveRunning.has(s.code)) selectedStates.add(s.code); });
+  // "done" is per state, not per category, so offer every idle state.
+  statesData.forEach(s => { if (!liveRunning.has(s.code)) selectedStates.add(s.code); });
   renderStates(); updateStateSel();
 });
 $('#sel-none').addEventListener('click', () => { selectedStates.clear(); renderStates(); updateStateSel(); });
 $('#fetch-selected').addEventListener('click', async () => {
   const states = Array.from(selectedStates);
-  if (!states.length) return;
-  let tax = $('#taxonomy-input').value.trim();
-  if (tax) {
-    try {
-      const pr = await api('/api/probe?state=' + encodeURIComponent(states[0]) + '&taxonomy=' + encodeURIComponent(tax));
-      if (pr.suggested) {
-        if (confirm(`"${tax}" matched 0 in ${states[0]}, but "${pr.suggested}" works.\n\nUse "${pr.suggested}" instead?`)) {
-          tax = pr.suggested; $('#taxonomy-input').value = tax;
-        }
-      } else if (pr.warning && !confirm(pr.warning + '\n\nFetch anyway?')) return;
-    } catch(e) {}
-  }
+  const categories = Array.from(chosenCats);
+  if (!states.length || !categories.length) return;
   try {
-    const d = await api('/api/fetch', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({states, taxonomy: tax})});
-    toast(`Started: ${d.started.join(', ') || 'none'}` + (tax ? ` · ${tax}` : ' · all providers'));
-    renderTaxonomyCurrent(tax);
+    const d = await api('/api/fetch', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({states, categories})});
+    toast(`Started ${d.started.join(', ') || 'none'} · ${categories.length === fetchCategories.length ? 'all categories' : categories.join(', ')}`);
     selectedStates.clear(); updateStateSel(); refreshStates();
   } catch(e) { toast('Fetch failed: ' + e.message, 'err'); }
 });
@@ -485,6 +508,7 @@ let overall = null;
 let activeCategory = '';
 let activeBucket = 'not_fetched';
 let shownRows = [];
+let phonePoll = null;
 const selectedRows = new Set();
 
 /* ---- categories ---- */
@@ -595,17 +619,25 @@ function renderRows() {
     const tr = document.createElement('tr');
     const sel = selectedRows.has(r.index);
     if (sel) tr.className = 'sel';
-    const spec = r.taxonomy && r.taxonomy !== r.category ? r.taxonomy.replace(r.category + ', ', '') : r.category;
+    const spec = (activeCategory ? '' : r.category + ' · ') + (r.entity_type === 'organization' ? 'Organization' : (r.taxonomy || ''));
+    const contact = r.contact_name && (r.email || r.contact_phone || r.phone_status)
+      ? `<div class="sp">${esc(r.contact_name)}${r.contact_title ? ' · ' + esc(r.contact_title) : ''}</div>` : '';
+    const phone = r.contact_phone ? `<div class="ph">☎ ${esc(r.contact_phone)}</div>`
+      : r.phone_status === 'pending' ? `<div class="ph"><span class="pill pending">phone pending…</span></div>`
+      : r.phone_status === 'not_found' ? `<div class="ph muted">no phone</div>` : '';
     tr.innerHTML =
       `<td>${canSelect(r) ? `<input type="checkbox" data-idx="${r.index}" ${sel ? 'checked' : ''}>` : ''}</td>` +
-      `<td><div class="nm">${esc(titleCase(r.name))}</div><div class="sp">${esc(spec)}${r.entity_type === 'organization' ? ' · organization' : ''}</div></td>` +
+      `<td><div class="nm">${esc(titleCase(r.name))}</div><div class="sp">${esc(spec)}</div></td>` +
       `<td>${esc(titleCase(r.city))}, ${esc(r.state)}</td>` +
       `<td>${r.medicare_enrolled === 'YES' ? 'Yes' : r.medicare_enrolled === 'NO' ? 'No' : '—'}</td>` +
       `<td>${statusPill(r)}</td>` +
-      `<td class="email">${r.email ? `<a href="mailto:${esc(r.email)}">${esc(r.email)}</a> <button class="copy" data-email="${esc(r.email)}">Copy</button>` : ''}</td>`;
+      `<td class="email">${r.email ? `<a href="mailto:${esc(r.email)}">${esc(r.email)}</a> <button class="copy" data-email="${esc(r.email)}">Copy</button>` : ''}${phone}${contact}</td>`;
     frag.appendChild(tr);
   });
   body.appendChild(frag);
+  // Phones arrive later via Apollo's webhook; poll while any are pending.
+  clearTimeout(phonePoll);
+  if (shownRows.some(r => r.phone_status === 'pending')) phonePoll = setTimeout(loadRows, 15000);
   const selectable = shownRows.filter(canSelect);
   $('#rows-check-all').checked = selectable.length > 0 && selectable.every(r => selectedRows.has(r.index));
 }
@@ -651,16 +683,23 @@ $('#run-banner').addEventListener('click', e => { if (e.target.closest('.x')) ru
 $('#enrich-selected').addEventListener('click', async () => {
   const indices = Array.from(selectedRows);
   if (!indices.length) return;
-  if (indices.length > 50 && !confirm(`Check ${indices.length} rows? This can use up to ${indices.length} Apollo credits (only emails found are charged).`)) return;
+  if (indices.length > 200 && !confirm(`Apollo allows about 200 searches per hour and 600 per day. ${indices.length} rows will likely hit the limit; the rest stay "Not checked" to retry later. Continue?`)) return;
+  if (indices.length > 50 && indices.length <= 200 && !confirm(`Check ${indices.length} rows? This can use up to ${indices.length} Apollo credits (only emails found are charged) and takes about ${Math.ceil(indices.length * 1.4 / 60)} min.`)) return;
   const btn = $('#enrich-selected');
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Searching…';
-  runBanner(`<span class="spinner dark"></span>&nbsp; Checking <b>${indices.length}</b> prospect${indices.length === 1 ? '' : 's'} in Apollo — about 1 second each. Keep this page open.`, 'run');
+  runBanner(`<span class="spinner dark"></span>&nbsp; Checking <b>${indices.length}</b> prospect${indices.length === 1 ? '' : 's'} in Apollo — about 1.5 seconds each. Keep this page open.`, 'run');
   try {
-    const d = await api('/api/enrich', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({indices})});
+    const wantPhone = $('#want-phone').checked && !$('#want-phone').disabled;
+    const d = await api('/api/enrich', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({indices, want_phone: wantPhone})});
     const found = d.fetched.filter(r => indices.includes(r.index));
-    const list = found.length ? `<div class="found">${found.map(r => `${esc(titleCase(r.name))} — ${esc(r.email)}`).join('<br>')}</div>` : '';
+    const who = r => esc(titleCase(r.name)) + (r.contact_name && r.entity_type === 'organization' ? ` (${esc(r.contact_name)}${r.contact_title ? ', ' + esc(r.contact_title) : ''})` : '');
+    const list = found.length ? `<div class="found">${found.map(r => `${who(r)} — ${esc(r.email)}`).join('<br>')}</div>` : '';
+    const limited = d.not_fetched.filter(r => /rate limited/.test(r.note || '')).length;
+    const pendingPhones = [...d.fetched, ...d.not_available].filter(r => r.phone_status === 'pending').length;
+    const phoneMsg = pendingPhones ? `<br>☎ ${pendingPhones} phone number${pendingPhones === 1 ? '' : 's'} requested — they arrive in a few minutes and appear automatically.` : '';
+    const limitMsg = limited ? `<br><b>Apollo search limit reached</b> — ${limited} row${limited === 1 ? '' : 's'} left as “Not checked”. Try again later (limits: 50/min, 200/hour, 600/day).` : '';
     runBanner(`<button class="x" title="Dismiss">×</button><b>Done.</b> Checked ${d.attempted} · <b>${found.length} email${found.length === 1 ? '' : 's'} found</b> · ` +
-      `${d.not_available.length} with no email · ${d.not_fetched.length} errors · ~${d.credits_estimate} credit${d.credits_estimate === 1 ? '' : 's'} used${list}`,
+      `${d.not_available.length} with no email · ${d.not_fetched.length} not checked · ~${d.credits_estimate} credit${d.credits_estimate === 1 ? '' : 's'} used${phoneMsg}${limitMsg}${list}`,
       found.length ? 'ok' : 'warn');
     selectedRows.clear(); updateRowSel();
     await loadCategories();
@@ -674,7 +713,6 @@ $('#enrich-selected').addEventListener('click', async () => {
 
 /* ---------- boot ---------- */
 loadConfig();
-loadTaxonomyHints();
 refreshStates();
 loadCategories().then(() => {
   // Open on the found emails if there are any, so they're visible right away.

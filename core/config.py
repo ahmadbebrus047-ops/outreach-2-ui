@@ -119,6 +119,30 @@ APOLLO_BULK_MATCH_URL = "https://api.apollo.io/api/v1/people/bulk_match"
 # which bulk_match can then enrich. Needs a key scoped to this endpoint.
 APOLLO_SEARCH_URL = "https://api.apollo.io/api/v1/mixed_people/api_search"
 APOLLO_SEARCH_ENABLED = os.getenv("APOLLO_SEARCH_ENABLED", "1") == "1"
+# Phone numbers: Apollo never returns them inline -- it POSTs them later to a
+# public webhook. Set this to a public https URL that forwards to this app
+# (e.g. a `cloudflared tunnel --url http://localhost:5000` address) to enable
+# the Phone checkbox. Phone reveals cost extra (mobile) credits.
+APOLLO_PHONE_WEBHOOK_BASE = os.getenv("APOLLO_PHONE_WEBHOOK_BASE", "").rstrip("/")
+
+
+def _webhook_secret() -> str:
+    """Random path token so only Apollo (which we give the URL) can post phones."""
+    path = DATA_DIR / "webhook_secret.txt"
+    if path.exists():
+        return path.read_text().strip()
+    import secrets
+    token = secrets.token_urlsafe(24)
+    DATA_DIR.mkdir(exist_ok=True)
+    path.write_text(token)
+    return token
+
+
+APOLLO_WEBHOOK_SECRET = _webhook_secret()
+
+# Search is rate-limited per key (seen: 50/minute, 200/hour, 600/day).
+# 1.3s between calls keeps a batch under the per-minute cap.
+APOLLO_SEARCH_PAUSE = float(os.getenv("APOLLO_SEARCH_PAUSE", "1.3"))
 # Apollo caps bulk_match at 10 people per request.
 APOLLO_BULK_SIZE = 10
 # Whether to also try to reveal personal emails (costs the same 1 credit if

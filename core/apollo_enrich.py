@@ -20,6 +20,8 @@ rest of the project uses, so it is safe alongside the fetch job.
 from __future__ import annotations
 
 import csv
+import json
+import threading
 from typing import Iterable
 
 from core import config
@@ -102,6 +104,8 @@ def row_view(row: dict, index: int) -> dict:
         "website": row.get("website", ""),
         "contact_name": row.get("contact_name", ""),
         "contact_title": row.get("contact_title", ""),
+        "contact_phone": row.get("contact_phone", ""),
+        "phone_status": row.get("phone_status", ""),
         "bucket": _bucket_for_row(row),
     }
 
@@ -114,6 +118,7 @@ def list_rows(
     category: str = "",
 ) -> list[dict]:
     """Return all rows as UI views, with optional filters."""
+    merge_phone_inbox(wait=False)
     rows = _load_rows()
     out = []
     for i, row in enumerate(rows):
@@ -162,7 +167,101 @@ def summary_by_category() -> list[dict]:
     return list(cats.values())
 
 
-def enrich_selected_rows(indices: Iterable[int]) -> dict:
+def _phones_by_person(payload) -> dict[str, list[str]]:
+    """Pull {apollo person id: [numbers]} out of a webhook body.
+
+    Apollo's exact webhook shape isn't pinned down in its docs, so walk the JSON
+    and take any object carrying both an `id` and a `phone_numbers` list.
+    """
+    found: dict[str, list[str]] = {}
+
+    def walk(node):
+        if isinstance(node, dict):
+            pid = node.get("id") or node.get("person_id")
+            nums = node.get("phone_numbers")
+            if pid and isinstance(nums, list):
+                have = found.setdefault(str(pid), [])
+                for n in nums:
+                    v = (n.get("sanitized_number") or n.get("raw_number") or n.get("number")
+                         if isinstance(n, dict) else n)
+                    if v and str(v) not in have:
+                        have.append(str(v))
+            for v in node.values():
+                walk(v)
+        elif isinstance(node, list):
+            for v in node:
+                walk(v)
+
+    walk(payload)
+    return found
+
+
+# Serializes this module's read-modify-write of prospects.csv. An enrich batch
+# holds rows in memory for minutes, so a phone webhook arriving mid-batch is
+# queued in PHONE_INBOX and merged in rather than written (and then clobbered).
+_csv_lock = threading.Lock()
+PHONE_INBOX = config.DATA_DIR / "phone_inbox.jsonl"
+
+
+def queue_phone_webhook(payload) -> int:
+    """Record a webhook delivery, then merge it if no batch is running.
+    Returns how many people with phones the payload carried."""
+    phones = _phones_by_person(payload)
+    log.info("Phone webhook received: %d people with phones", len(phones))
+    if phones:
+        with open(PHONE_INBOX, "a", encoding="utf-8") as fh:
+            fh.write(json.dumps(phones) + "\n")
+        merge_phone_inbox(wait=False)
+    return len(phones)
+
+
+def _drain_inbox_into(rows: list[dict]) -> int:
+    """Apply queued phones to `rows` in place and empty the inbox."""
+    if not PHONE_INBOX.exists():
+        return 0
+    # Move the inbox aside first so a delivery landing mid-drain starts a new
+    # inbox instead of being deleted unread.
+    taken = PHONE_INBOX.with_suffix(".processing")
+    PHONE_INBOX.replace(taken)
+    phones: dict[str, list[str]] = {}
+    for line in taken.read_text(encoding="utf-8").splitlines():
+        if line.strip():
+            for pid, nums in json.loads(line).items():
+                have = phones.setdefault(pid, [])
+                have.extend(n for n in nums if n not in have)
+    updated = 0
+    for row in rows:
+        nums = phones.get(row.get("apollo_id") or "")
+        if nums is not None:
+            row["contact_phone"] = "; ".join(nums)
+            row["phone_status"] = "found" if nums else "not_found"
+            updated += 1
+    taken.unlink()
+    return updated
+
+
+def merge_phone_inbox(wait: bool = True) -> int:
+    """Merge queued phones into the CSV. With wait=False, skip if a batch holds the lock."""
+    if not PHONE_INBOX.exists():
+        return 0
+    if not _csv_lock.acquire(blocking=wait):
+        return 0
+    try:
+        rows = _load_rows()
+        updated = _drain_inbox_into(rows)
+        if updated:
+            _write_rows(rows)
+        return updated
+    finally:
+        _csv_lock.release()
+
+
+def enrich_selected_rows(indices: Iterable[int], want_phone: bool = False) -> dict:
+    with _csv_lock:
+        return _enrich_selected_rows(indices, want_phone)
+
+
+def _enrich_selected_rows(indices: Iterable[int], want_phone: bool) -> dict:
     """Enrich the given row indices via Apollo and persist results.
 
     Returns:
@@ -217,10 +316,16 @@ def enrich_selected_rows(indices: Iterable[int]) -> dict:
     if to_enrich:
         enricher = ApolloEnricher()
         prospects = [_prospect_from_row(rows[i]) for i in to_enrich]
-        email_results = enricher.find_emails_bulk(prospects)
+        email_results = enricher.find_emails_bulk(prospects, want_phone=want_phone)
 
         for i, res in zip(to_enrich, email_results):
             row = rows[i]
+            if res.apollo_id:
+                row["apollo_id"] = res.apollo_id
+            if res.phone_requested:
+                row["phone_status"] = "pending"
+                row["contact_name"] = row.get("contact_name") or res.contact_name
+                row["contact_title"] = row.get("contact_title") or res.contact_title
             row["email_status"] = res.status
             row["email_source"] = res.source or "apollo"
             row["email_confidence"] = str(res.confidence or "")
@@ -244,10 +349,11 @@ def enrich_selected_rows(indices: Iterable[int]) -> dict:
             elif res.status == "not_found":
                 result["not_available"].append(view)
             else:  # error
-                view["note"] = "Apollo error"
+                view["note"] = res.source or "Apollo error"
                 result["not_fetched"].append(view)
 
     result["attempted"] = len(indices)
+    _drain_inbox_into(rows)  # phones that arrived while this batch ran
     _write_rows(rows)
     log.info(
         "Apollo enrich: %d attempted, %d fetched, %d unavailable, %d not-fetched",
