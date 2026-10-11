@@ -1,0 +1,21 @@
+2026-09-14 19:14:14,298 | INFO    | cms_source | CMS enrollment index for TX: 206280 NPIs
+2026-09-14 19:28:03,293 | INFO    | cms_source | CMS enrollment index for TX: 206280 NPIs
+2026-09-14 19:28:41,417 | INFO    | cms_source | CMS enrollment index for CA: 257847 NPIs
+2026-09-14 19:29:20,905 | INFO    | cms_source | CMS enrollment index for NY: 192927 NPIs
+2026-09-14 19:29:54,643 | INFO    | cms_source | CMS enrollment index for FL: 184624 NPIs
+2026-09-14 19:37:29,900 | INFO    | cms_source | CMS enrollment index for TX: 206280 NPIs
+2026-09-14 19:38:02,543 | INFO    | cms_source | CMS enrollment index for CA: 257847 NPIs
+2026-09-14 19:38:48,984 | INFO    | cms_source | CMS enrollment index for TX: 206280 NPIs
+2026-09-14 19:39:22,743 | INFO    | cms_source | CMS enrollment index for CA: 257847 NPIs
+2026-09-14 19:39:53,617 | INFO    | cms_source | CMS enrollment index for NY: 192927 NPIs
+2026-09-14 19:40:26,960 | INFO    | cms_source | CMS enrollment index for FL: 184624 NPIs
+2026-09-14 19:41:58,471 | INFO    | cms_source | CMS enrollment index for TX: 206280 NPIs
+2026-09-14 19:42:31,256 | INFO    | cms_source | CMS enrollment index for CA: 257847 NPIs
+2026-09-14 19:43:00,109 | INFO    | cms_source | CMS enrollment index for NY: 192927 NPIs
+2026-09-14 19:43:27,939 | INFO    | cms_source | CMS enrollment index for FL: 184624 NPIs
+2026-09-15 08:50:55,980 | INFO    | cms_source | CMS enrollment index for TX: 206280 NPIs
+2026-09-15 08:51:41,853 | INFO    | cms_source | CMS enrollment index for CA: 257847 NPIs
+2026-09-15 08:52:17,851 | INFO    | cms_source | CMS enrollment index for NY: 192927 NPIs
+2026-09-15 08:52:56,583 | INFO    | cms_source | CMS enrollment index for FL: 184624 NPIs
+2026-10-11 10:33:36,549 | WARNING | cms_source | CMS request failed (state=TX offset=0): 403 Client Error: Forbidden for url: https://data.cms.gov/data-api/v1/dataset/2457ea29-fc82-48b0-86ec-3b0755de7515/data?filter%5BSTATE_CD%5D=TX&size=5000&offset=0
+2026-10-11 10:33:36,550 | INFO    | cms_source | CMS enrollment index for TX: 0 NPIs

@@ -1,0 +1,122 @@
+2026-09-14 19:14:14,305 | INFO    | fetch_prospects | State TX: 0 new prospects appended.
+2026-09-14 19:28:03,299 | INFO    | fetch_prospects | State TX: 0 new prospects appended.
+2026-09-14 19:28:41,447 | INFO    | fetch_prospects | State CA: 0 new prospects appended.
+2026-09-14 19:29:20,942 | INFO    | fetch_prospects | State NY: 0 new prospects appended.
+2026-09-14 19:29:54,669 | INFO    | fetch_prospects | State FL: 0 new prospects appended.
+2026-09-14 19:29:54,669 | INFO    | fetch_prospects | Done. 0 new prospects total.
+2026-09-14 19:37:29,906 | INFO    | fetch_prospects | State TX: 0 new prospects appended.
+2026-09-14 19:38:02,571 | INFO    | fetch_prospects | State CA: 0 new prospects appended.
+2026-09-14 19:38:49,004 | INFO    | fetch_prospects | State TX: 1000 new prospects appended.
+2026-09-14 19:39:22,793 | INFO    | fetch_prospects | State CA: 990 new prospects appended.
+2026-09-14 19:39:53,669 | INFO    | fetch_prospects | State NY: 980 new prospects appended.
+2026-09-14 19:40:27,009 | INFO    | fetch_prospects | State FL: 962 new prospects appended.
+2026-09-14 19:40:27,009 | INFO    | fetch_prospects | Done. 3932 new prospects total.
+2026-09-14 19:41:58,514 | INFO    | fetch_prospects | State TX: 953 new prospects appended.
+2026-09-14 19:42:31,311 | INFO    | fetch_prospects | State CA: 922 new prospects appended.
+2026-09-14 19:43:00,163 | INFO    | fetch_prospects | State NY: 930 new prospects appended.
+2026-09-14 19:43:27,980 | INFO    | fetch_prospects | State FL: 890 new prospects appended.
+2026-09-14 19:43:27,980 | INFO    | fetch_prospects | Done. 3695 new prospects total.
+2026-09-15 08:50:55,997 | INFO    | fetch_prospects | State TX: 1000 new prospects appended.
+2026-09-15 08:51:41,896 | INFO    | fetch_prospects | State CA: 984 new prospects appended.
+2026-09-15 08:52:17,886 | INFO    | fetch_prospects | State NY: 953 new prospects appended.
+2026-09-15 08:52:56,623 | INFO    | fetch_prospects | State FL: 940 new prospects appended.
+2026-09-15 08:52:56,623 | INFO    | fetch_prospects | Done. 3877 new prospects total.
+2026-09-16 01:44:05,028 | INFO    | fetch_prospects | State TX: 3 new prospects appended.
+2026-09-16 01:44:05,030 | INFO    | fetch_prospects | State TX: 0 new prospects appended.
+2026-09-16 01:44:05,031 | INFO    | fetch_prospects | State CA: 3 new prospects appended.
+2026-09-16 01:45:35,656 | INFO    | fetch_prospects | State TX: 5 new prospects appended.
+2026-09-16 01:45:35,656 | INFO    | fetch_prospects | State NY: 5 new prospects appended.
+2026-09-16 01:45:35,657 | INFO    | fetch_prospects | State CA: 5 new prospects appended.
+2026-09-16 01:47:47,678 | INFO    | fetch_prospects | State TX: 5 new prospects appended.
+2026-09-16 01:47:47,678 | INFO    | fetch_prospects | State NY: 5 new prospects appended.
+2026-09-16 01:47:47,679 | INFO    | fetch_prospects | State CA: 5 new prospects appended.
+2026-09-16 02:03:49,316 | INFO    | fetch_prospects | State TX: 5 new prospects appended.
+2026-09-16 02:03:49,317 | INFO    | fetch_prospects | State NY: 5 new prospects appended.
+2026-09-16 02:03:49,317 | INFO    | fetch_prospects | State CA: 5 new prospects appended.
+2026-09-16 02:03:49,816 | INFO    | fetch_prospects | State TX: 3 new prospects appended.
+2026-09-16 02:03:49,817 | INFO    | fetch_prospects | State TX: 0 new prospects appended.
+2026-09-16 02:03:49,817 | INFO    | fetch_prospects | State CA: 3 new prospects appended.
+2026-09-16 02:19:35,408 | INFO    | fetch_prospects | State TX: 3 new prospects appended.
+2026-09-16 02:19:41,594 | INFO    | fetch_prospects | State NY: 5 new prospects appended.
+2026-09-16 02:19:41,595 | INFO    | fetch_prospects | State CA: 5 new prospects appended.
+2026-09-16 02:19:41,595 | INFO    | fetch_prospects | State TX: 5 new prospects appended.
+2026-09-16 02:19:42,092 | INFO    | fetch_prospects | State TX: 3 new prospects appended.
+2026-09-16 02:19:42,093 | INFO    | fetch_prospects | State TX: 0 new prospects appended.
+2026-09-16 02:19:42,094 | INFO    | fetch_prospects | State CA: 3 new prospects appended.
+2026-09-16 02:27:43,906 | INFO    | fetch_prospects | State TX: 5 new prospects appended.
+2026-09-16 02:27:43,907 | INFO    | fetch_prospects | State NY: 5 new prospects appended.
+2026-09-16 02:27:43,906 | INFO    | fetch_prospects | State CA: 5 new prospects appended.
+2026-09-16 02:27:44,432 | INFO    | fetch_prospects | State TX: 3 new prospects appended.
+2026-09-16 02:27:44,433 | INFO    | fetch_prospects | State TX: 0 new prospects appended.
+2026-09-16 02:27:44,434 | INFO    | fetch_prospects | State CA: 3 new prospects appended.
+2026-09-16 02:47:06,319 | INFO    | fetch_prospects | Fetching TX with taxonomy='Internal Medicine'
+2026-09-16 02:47:06,320 | INFO    | fetch_prospects | State TX: 4 new prospects appended.
+2026-09-16 02:47:06,470 | INFO    | fetch_prospects | Fetching CA with taxonomy=''
+2026-09-16 02:47:06,471 | INFO    | fetch_prospects | State CA: 4 new prospects appended.
+2026-09-16 02:47:06,623 | INFO    | fetch_prospects | Fetching NY with taxonomy='internal medicine'
+2026-09-16 02:47:06,623 | INFO    | fetch_prospects | State NY: 0 new prospects appended.
+2026-09-16 02:47:06,774 | INFO    | fetch_prospects | Fetching FL with taxonomy='Internal Medicine'
+2026-09-16 02:47:06,775 | INFO    | fetch_prospects | State FL: 4 new prospects appended.
+2026-09-16 02:47:15,415 | INFO    | fetch_prospects | Fetching TX with taxonomy='Internal Medicine'
+2026-09-16 02:47:15,416 | ERROR   | fetch_prospects | State TX failed
+Traceback (most recent call last):
+  File "/home/claude/work/outreach-2/jobs/fetch_prospects.py", line 51, in fetch_one_state
+    prospects = list(fetch_state(state, taxonomy=taxonomy))
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: fake_fetch_state() got an unexpected keyword argument 'taxonomy'
+2026-09-16 02:47:15,416 | INFO    | fetch_prospects | Fetching CA with taxonomy='Internal Medicine'
+2026-09-16 02:47:15,417 | ERROR   | fetch_prospects | State CA failed
+Traceback (most recent call last):
+  File "/home/claude/work/outreach-2/jobs/fetch_prospects.py", line 51, in fetch_one_state
+    prospects = list(fetch_state(state, taxonomy=taxonomy))
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: fake_fetch_state() got an unexpected keyword argument 'taxonomy'
+2026-09-16 02:47:15,416 | INFO    | fetch_prospects | Fetching NY with taxonomy='Internal Medicine'
+2026-09-16 02:47:15,418 | ERROR   | fetch_prospects | State NY failed
+Traceback (most recent call last):
+  File "/home/claude/work/outreach-2/jobs/fetch_prospects.py", line 51, in fetch_one_state
+    prospects = list(fetch_state(state, taxonomy=taxonomy))
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: fake_fetch_state() got an unexpected keyword argument 'taxonomy'
+2026-09-16 02:47:15,860 | INFO    | fetch_prospects | Fetching TX with taxonomy=''
+2026-09-16 02:47:15,860 | ERROR   | fetch_prospects | State TX failed
+Traceback (most recent call last):
+  File "/home/claude/work/outreach-2/jobs/fetch_prospects.py", line 51, in fetch_one_state
+    prospects = list(fetch_state(state, taxonomy=taxonomy))
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: fake_fetch_state() got an unexpected keyword argument 'taxonomy'
+2026-09-16 02:47:21,565 | INFO    | fetch_prospects | Fetching CA with taxonomy='Internal Medicine'
+2026-09-16 02:47:21,567 | INFO    | fetch_prospects | State CA: 5 new prospects appended.
+2026-09-16 02:47:21,567 | INFO    | fetch_prospects | Fetching TX with taxonomy='Internal Medicine'
+2026-09-16 02:47:21,567 | INFO    | fetch_prospects | Fetching NY with taxonomy='Internal Medicine'
+2026-09-16 02:47:21,568 | INFO    | fetch_prospects | State TX: 5 new prospects appended.
+2026-09-16 02:47:21,568 | INFO    | fetch_prospects | State NY: 5 new prospects appended.
+2026-09-16 02:47:22,056 | INFO    | fetch_prospects | Fetching TX with taxonomy=''
+2026-09-16 02:47:22,057 | INFO    | fetch_prospects | State TX: 3 new prospects appended.
+2026-09-16 02:47:22,058 | INFO    | fetch_prospects | Fetching TX with taxonomy=''
+2026-09-16 02:47:22,058 | INFO    | fetch_prospects | State TX: 0 new prospects appended.
+2026-09-16 02:47:22,058 | INFO    | fetch_prospects | Fetching CA with taxonomy=''
+2026-09-16 02:47:22,058 | INFO    | fetch_prospects | State CA: 3 new prospects appended.
+2026-09-16 02:48:14,785 | INFO    | fetch_prospects | Fetching TX with taxonomy='Internal Medicine'
+2026-09-16 02:48:14,786 | INFO    | fetch_prospects | Fetching CA with taxonomy='Internal Medicine'
+2026-09-16 02:48:14,786 | INFO    | fetch_prospects | Fetching NY with taxonomy='Internal Medicine'
+2026-09-16 02:48:14,787 | INFO    | fetch_prospects | State TX: 5 new prospects appended.
+2026-09-16 02:48:14,788 | INFO    | fetch_prospects | State CA: 5 new prospects appended.
+2026-09-16 02:48:14,788 | INFO    | fetch_prospects | State NY: 5 new prospects appended.
+2026-09-16 02:48:15,254 | INFO    | fetch_prospects | Fetching TX with taxonomy=''
+2026-09-16 02:48:15,254 | INFO    | fetch_prospects | State TX: 3 new prospects appended.
+2026-09-16 02:48:15,255 | INFO    | fetch_prospects | Fetching TX with taxonomy=''
+2026-09-16 02:48:15,255 | INFO    | fetch_prospects | State TX: 0 new prospects appended.
+2026-09-16 02:48:15,255 | INFO    | fetch_prospects | Fetching CA with taxonomy=''
+2026-09-16 02:48:15,255 | INFO    | fetch_prospects | State CA: 3 new prospects appended.
+2026-09-16 02:48:15,674 | INFO    | fetch_prospects | Fetching TX with taxonomy='Internal Medicine'
+2026-09-16 02:48:15,674 | INFO    | fetch_prospects | State TX: 4 new prospects appended.
+2026-09-16 02:48:15,825 | INFO    | fetch_prospects | Fetching CA with taxonomy=''
+2026-09-16 02:48:15,826 | INFO    | fetch_prospects | State CA: 4 new prospects appended.
+2026-09-16 02:48:15,977 | INFO    | fetch_prospects | Fetching NY with taxonomy='internal medicine'
+2026-09-16 02:48:15,978 | INFO    | fetch_prospects | State NY: 0 new prospects appended.
+2026-09-16 02:48:16,130 | INFO    | fetch_prospects | Fetching FL with taxonomy='Internal Medicine'
+2026-09-16 02:48:16,131 | INFO    | fetch_prospects | State FL: 4 new prospects appended.
+2026-09-15 21:54:07,044 | INFO    | fetch_prospects | Fetching TX with taxonomy='Family Medicine'
+2026-10-11 10:33:24,982 | INFO    | fetch_prospects | Fetching TX with taxonomy='Marriage & Family Therapist'
+2026-10-11 10:33:36,577 | INFO    | fetch_prospects | State TX: 999 new prospects appended.

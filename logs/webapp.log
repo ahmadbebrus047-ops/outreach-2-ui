@@ -1,0 +1,25 @@
+2026-09-16 01:45:31,106 | INFO    | webapp | NPPES_TAXONOMY set to 'Internal Medicine'
+2026-09-16 01:45:35,653 | INFO    | webapp | NPPES_TAXONOMY set to 'Internal Medicine'
+2026-09-16 01:47:47,675 | INFO    | webapp | NPPES_TAXONOMY set to 'Internal Medicine'
+2026-09-16 02:03:49,313 | INFO    | webapp | NPPES_TAXONOMY set to 'Internal Medicine'
+2026-09-16 02:19:35,399 | INFO    | webapp | Reset 1 stale running state(s) on startup: TX
+2026-09-16 02:19:41,590 | INFO    | webapp | NPPES_TAXONOMY set to 'Internal Medicine'
+2026-09-16 02:27:37,264 | INFO    | webapp | NPPES_TAXONOMY set to 'Family Medicine'
+2026-09-16 02:27:43,902 | INFO    | webapp | NPPES_TAXONOMY set to 'Internal Medicine'
+2026-09-16 02:47:15,413 | INFO    | webapp | NPPES_TAXONOMY set to 'Internal Medicine'
+2026-09-16 02:47:15,639 | INFO    | webapp | NPPES_TAXONOMY set to 'Family Medicine'
+2026-09-16 02:47:21,563 | INFO    | webapp | NPPES_TAXONOMY set to 'Internal Medicine'
+2026-09-16 02:48:14,783 | INFO    | webapp | NPPES_TAXONOMY set to 'Internal Medicine'
+2026-09-16 02:48:26,765 | INFO    | webapp | NPPES_TAXONOMY set to 'Family Medicine'
+2026-09-15 21:53:48,501 | INFO    | webapp | Starting web GUI on http://127.0.0.1:5000
+2026-09-15 21:54:19,762 | INFO    | webapp | Reset 1 stale running state(s) on startup: TX
+2026-09-15 21:54:19,763 | INFO    | webapp | Starting web GUI on http://127.0.0.1:5000
+2026-10-11 10:20:23,504 | INFO    | webapp | Starting web GUI on http://127.0.0.1:5000
+2026-10-11 10:29:54,501 | INFO    | webapp | Starting web GUI on http://127.0.0.1:5000
+2026-10-11 10:31:33,815 | INFO    | webapp | Starting web GUI on http://127.0.0.1:5000
+2026-10-11 10:45:17,855 | INFO    | webapp | Starting web GUI on http://127.0.0.1:5000
+2026-10-11 10:52:20,254 | INFO    | webapp | Starting web GUI on http://127.0.0.1:5000
+2026-10-11 10:53:44,991 | INFO    | webapp | Starting web GUI on http://127.0.0.1:5000
+2026-10-11 10:54:16,547 | INFO    | webapp | Starting web GUI on http://127.0.0.1:5000
+2026-10-11 10:54:37,673 | INFO    | webapp | Starting web GUI on http://127.0.0.1:5000
+2026-10-11 10:55:10,979 | INFO    | webapp | Starting web GUI on http://127.0.0.1:5000

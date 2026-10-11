@@ -1,0 +1,29 @@
+2026-09-14 19:13:38,086 | WARNING | nppes_source | NPPES request failed (state=TX skip=0): HTTPSConnectionPool(host='npiregistry.cms.gov', port=443): Max retries exceeded with url: /api/?version=2.1&state=TX&country_code=US&limit=200&skip=0 (Caused by NameResolutionError("HTTPSConnection(host='npiregistry.cms.gov', port=443): Failed to resolve 'npiregistry.cms.gov' ([Errno 8] nodename nor servname provided, or not known)"))
+2026-09-14 19:13:38,086 | INFO    | nppes_source | Fetched 0 prospects for TX
+2026-09-14 19:14:14,309 | WARNING | nppes_source | NPPES request failed (state=CA skip=0): HTTPSConnectionPool(host='npiregistry.cms.gov', port=443): Max retries exceeded with url: /api/?version=2.1&state=CA&country_code=US&limit=200&skip=0 (Caused by NameResolutionError("HTTPSConnection(host='npiregistry.cms.gov', port=443): Failed to resolve 'npiregistry.cms.gov' ([Errno 8] nodename nor servname provided, or not known)"))
+2026-09-14 19:14:14,309 | INFO    | nppes_source | Fetched 0 prospects for CA
+2026-09-14 19:27:33,273 | WARNING | nppes_source | NPPES request failed (state=TX skip=0): HTTPSConnectionPool(host='npiregistry.cms.gov', port=443): Max retries exceeded with url: /api/?version=2.1&state=TX&country_code=US&limit=200&skip=0 (Caused by NameResolutionError("HTTPSConnection(host='npiregistry.cms.gov', port=443): Failed to resolve 'npiregistry.cms.gov' ([Errno 8] nodename nor servname provided, or not known)"))
+2026-09-14 19:27:33,273 | INFO    | nppes_source | Fetched 0 prospects for TX
+2026-09-14 19:28:03,302 | WARNING | nppes_source | NPPES request failed (state=CA skip=0): HTTPSConnectionPool(host='npiregistry.cms.gov', port=443): Max retries exceeded with url: /api/?version=2.1&state=CA&country_code=US&limit=200&skip=0 (Caused by NameResolutionError("HTTPSConnection(host='npiregistry.cms.gov', port=443): Failed to resolve 'npiregistry.cms.gov' ([Errno 8] nodename nor servname provided, or not known)"))
+2026-09-14 19:28:03,302 | INFO    | nppes_source | Fetched 0 prospects for CA
+2026-09-14 19:28:41,451 | WARNING | nppes_source | NPPES request failed (state=NY skip=0): HTTPSConnectionPool(host='npiregistry.cms.gov', port=443): Max retries exceeded with url: /api/?version=2.1&state=NY&country_code=US&limit=200&skip=0 (Caused by NameResolutionError("HTTPSConnection(host='npiregistry.cms.gov', port=443): Failed to resolve 'npiregistry.cms.gov' ([Errno 8] nodename nor servname provided, or not known)"))
+2026-09-14 19:28:41,451 | INFO    | nppes_source | Fetched 0 prospects for NY
+2026-09-14 19:29:20,970 | WARNING | nppes_source | NPPES request failed (state=FL skip=0): HTTPSConnectionPool(host='npiregistry.cms.gov', port=443): Max retries exceeded with url: /api/?version=2.1&state=FL&country_code=US&limit=200&skip=0 (Caused by NameResolutionError("HTTPSConnection(host='npiregistry.cms.gov', port=443): Failed to resolve 'npiregistry.cms.gov' ([Errno 8] nodename nor servname provided, or not known)"))
+2026-09-14 19:29:20,970 | INFO    | nppes_source | Fetched 0 prospects for FL
+2026-09-14 19:37:04,852 | INFO    | nppes_source | Fetched 0 prospects for TX
+2026-09-14 19:37:30,091 | INFO    | nppes_source | Fetched 0 prospects for CA
+2026-09-14 19:38:02,914 | INFO    | nppes_source | Fetched 0 prospects for NY
+2026-09-14 19:38:27,155 | INFO    | nppes_source | Fetched 1000 prospects for TX
+2026-09-14 19:38:53,341 | INFO    | nppes_source | Fetched 1000 prospects for CA
+2026-09-14 19:39:27,413 | INFO    | nppes_source | Fetched 1000 prospects for NY
+2026-09-14 19:39:57,935 | INFO    | nppes_source | Fetched 1000 prospects for FL
+2026-09-14 19:41:35,800 | INFO    | nppes_source | Fetched 1000 prospects for TX
+2026-09-14 19:42:03,185 | INFO    | nppes_source | Fetched 1000 prospects for CA
+2026-09-14 19:42:35,691 | INFO    | nppes_source | Fetched 1000 prospects for NY
+2026-09-14 19:43:05,739 | INFO    | nppes_source | Fetched 1000 prospects for FL
+2026-09-15 08:50:19,212 | INFO    | nppes_source | Fetched 1000 prospects for TX
+2026-09-15 08:50:59,863 | INFO    | nppes_source | Fetched 1000 prospects for CA
+2026-09-15 08:51:45,674 | INFO    | nppes_source | Fetched 1000 prospects for NY
+2026-09-15 08:52:21,685 | INFO    | nppes_source | Fetched 1000 prospects for FL
+2026-09-15 21:54:11,098 | INFO    | nppes_source | Fetched 1000 prospects for TX
+2026-10-11 10:33:34,882 | INFO    | nppes_source | Fetched 1000 prospects for TX

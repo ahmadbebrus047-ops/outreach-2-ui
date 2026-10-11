@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Outreach Console</title>
+<style>
+  :root {
+    --bg: #f5f6f8;
+    --panel: #ffffff;
+    --panel-2: #f9fafb;
+    --line: #e4e7ec;
+    --line-soft: #eef0f3;
+    --ink: #101828;
+    --ink-dim: #475467;
+    --ink-faint: #8a94a6;
+    --accent: #2563eb;
+    --accent-soft: #eff4ff;
+    --green: #15803d;
+    --green-soft: #ecfdf3;
+    --violet: #6d28d9;
+    --violet-soft: #f4f0ff;
+    --amber: #b45309;
+    --amber-soft: #fff7e6;
+    --red: #c2410c;
+    --radius: 8px;
+    --mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 14px; line-height: 1.45; }
+  button, input, select { font-family: inherit; }
+
+  /* ---- shell ---- */
+  header.topbar {
+    display: flex; align-items: center; gap: 14px; padding: 0 24px; height: 56px;
+    background: var(--panel); border-bottom: 1px solid var(--line);
+    position: sticky; top: 0; z-index: 20;
+  }
+  .brand { font-weight: 700; font-size: 15px; }
+  .steps { display: flex; gap: 4px; margin-left: 18px; height: 100%; }
+  .steptab {
+    appearance: none; background: none; border: none; cursor: pointer; height: 100%;
+    color: var(--ink-faint); font-size: 14px; font-weight: 500; padding: 0 14px;
+    border-bottom: 2px solid transparent; display: flex; align-items: center; gap: 8px;
+  }
+  .steptab .n {
+    font-size: 11px; width: 20px; height: 20px; display: grid; place-items: center;
+    border-radius: 50%; background: var(--line-soft); color: var(--ink-faint); font-weight: 600;
+  }
+  .steptab:hover { color: var(--ink-dim); }
+  .steptab.active { color: var(--ink); border-bottom-color: var(--accent); }
+  .steptab.active .n { background: var(--accent); color: #fff; }
+  .spacer { flex: 1; }
+  .keystate { font-size: 12px; padding: 4px 10px; border-radius: 100px; background: var(--line-soft); color: var(--ink-dim); }
+  .keystate.on { background: var(--green-soft); color: var(--green); }
+  .keystate.off { background: var(--amber-soft); color: var(--amber); }
+
+  main { padding: 24px; max-width: 1360px; margin: 0 auto; }
+  .view { display: none; }
+  .view.active { display: block; }
+
+  h2.section { font-size: 18px; font-weight: 650; margin: 0 0 4px; }
+  p.hint { color: var(--ink-dim); font-size: 13px; margin: 0 0 18px; max-width: 80ch; }
+
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; margin-bottom: 18px; }
+  .panel h3 { margin: 0 0 12px; font-size: 14px; font-weight: 600; }
+
+  label.field { display: block; }
+  label.field .lbl { display: block; font-size: 12.5px; color: var(--ink-dim); margin-bottom: 6px; }
+  input[type=text], select {
+    background: var(--panel); border: 1px solid var(--line); color: var(--ink);
+    border-radius: var(--radius); padding: 8px 10px; font-size: 13.5px; height: 36px;
+  }
+  input[type=text]:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .row-fields { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: end; }
+  .row-fields input { width: 100%; }
+
+  button.btn {
+    appearance: none; cursor: pointer; font-size: 13.5px; font-weight: 500; height: 36px;
+    border-radius: var(--radius); padding: 0 14px; border: 1px solid var(--line);
+    background: var(--panel); color: var(--ink); display: inline-flex; align-items: center; gap: 7px; white-space: nowrap;
+  }
+  button.btn:hover:not(:disabled) { background: var(--panel-2); border-color: #cfd4dc; }
+  button.btn:disabled { opacity: .45; cursor: not-allowed; }
+  button.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+  button.btn.primary:hover:not(:disabled) { background: #1d4ed8; }
+  button.btn.small { height: 30px; padding: 0 10px; font-size: 12.5px; }
+  button.btn.ghost { border-color: transparent; background: none; color: var(--ink-dim); }
+  button.btn.ghost:hover:not(:disabled) { background: var(--line-soft); }
+
+  .toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .toolbar .grow { flex: 1; }
+  .muted { color: var(--ink-faint); }
+  .mono { font-family: var(--mono); }
+  .selcount { font-size: 13px; color: var(--ink-dim); }
+
+  /* ---- step 1 ---- */
+  .tracker { display: flex; gap: 32px; flex-wrap: wrap; }
+  .stat { display: flex; flex-direction: column; gap: 2px; }
+  .stat .v { font-size: 24px; font-weight: 700; line-height: 1.1; }
+  .stat .k { font-size: 12px; color: var(--ink-faint); }
+  .stat.done .v { color: var(--green); }
+  .stat.total .v { color: var(--accent); }
+  .progress-outer { height: 6px; background: var(--line-soft); border-radius: 100px; overflow: hidden; margin: 16px 0 6px; }
+  .progress-inner { height: 100%; background: var(--green); width: 0%; transition: width .4s ease; }
+  .state-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin-top: 14px; }
+  .scell {
+    position: relative; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel);
+    padding: 10px 12px; cursor: pointer; user-select: none; display: flex; flex-direction: column; gap: 2px;
+  }
+  .scell:hover { border-color: #cfd4dc; }
+  .scell.selected { border-color: var(--accent); background: var(--accent-soft); }
+  .scell .code { font-weight: 700; font-size: 13.5px; }
+  .scell .nm { font-size: 11.5px; color: var(--ink-faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .scell .meta { font-size: 11.5px; color: var(--ink-dim); margin-top: 2px; }
+  .dot { position: absolute; top: 11px; right: 11px; width: 8px; height: 8px; border-radius: 50%; background: var(--line); }
+  .dot.done { background: #22c55e; }
+  .dot.running { background: #f59e0b; animation: pulse 1s infinite; }
+  .dot.error { background: #ef4444; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+
+  /* ---- multi-select ---- */
+  .ms { position: relative; max-width: 420px; }
+  .ms-btn {
+    width: 100%; height: 38px; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 0 12px; font-size: 13.5px; color: var(--ink); cursor: pointer; text-align: left;
+  }
+  .ms-btn:hover { border-color: #cfd4dc; }
+  .ms.open .ms-btn { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .ms-btn .caret { color: var(--ink-faint); font-size: 12px; }
+  .ms-menu {
+    position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 30; background: var(--panel);
+    border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 12px 32px rgba(16,24,40,.12); padding: 6px;
+  }
+  .ms-opt { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 6px; cursor: pointer; font-size: 13.5px; }
+  .ms-opt:hover { background: var(--panel-2); }
+  .ms-all { border-bottom: 1px solid var(--line-soft); margin-bottom: 4px; padding-bottom: 10px; font-weight: 600; }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+  .chip { background: var(--accent-soft); color: var(--accent); font-size: 12.5px; font-weight: 500; padding: 4px 6px 4px 10px; border-radius: 100px; display: inline-flex; align-items: center; gap: 4px; }
+  .chip button { border: none; background: none; color: inherit; cursor: pointer; font-size: 14px; line-height: 1; padding: 0 4px; }
+
+  /* ---- step 2 layout ---- */
+  .s2 { display: grid; grid-template-columns: 290px 1fr; gap: 18px; align-items: start; }
+  @media (max-width: 900px) { .s2 { grid-template-columns: 1fr; } }
+
+  .cats { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); position: sticky; top: 76px; overflow: hidden; }
+  .cats-head { padding: 14px 14px 10px; border-bottom: 1px solid var(--line-soft); }
+  .cats-head .t { font-weight: 600; font-size: 14px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: baseline; }
+  .cats-head input { width: 100%; height: 32px; font-size: 13px; }
+  .cat-list { max-height: calc(100vh - 210px); overflow-y: auto; padding: 6px; }
+  .cat {
+    display: block; width: 100%; text-align: left; appearance: none; border: none; background: none; cursor: pointer;
+    padding: 9px 10px; border-radius: 6px; color: var(--ink);
+  }
+  .cat:hover { background: var(--panel-2); }
+  .cat.active { background: var(--accent-soft); }
+  .cat .top { display: flex; gap: 8px; align-items: baseline; }
+  .cat .nm { flex: 1; font-size: 13px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cat.active .nm { color: var(--accent); font-weight: 600; }
+  .cat .tot { font-size: 12px; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+  .cat .em { font-size: 11.5px; color: var(--green); font-weight: 600; }
+  .bar { display: flex; height: 4px; border-radius: 100px; overflow: hidden; background: var(--line-soft); margin-top: 6px; }
+  .bar span { display: block; height: 100%; }
+  .bar .f { background: #22c55e; }
+  .bar .n { background: #a78bfa; }
+
+  .work-head { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+  .work-head h2 { margin: 0; font-size: 20px; font-weight: 700; }
+  .work-head .sub { color: var(--ink-faint); font-size: 13px; margin-top: 2px; }
+
+  .cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+  @media (max-width: 700px) { .cards { grid-template-columns: repeat(2, 1fr); } }
+  .card {
+    appearance: none; text-align: left; cursor: pointer; background: var(--panel); border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 12px 14px; color: var(--ink);
+  }
+  .card:hover { border-color: #cfd4dc; }
+  .card.active { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .card .v { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .card .k { font-size: 12.5px; color: var(--ink-dim); display: flex; align-items: center; gap: 6px; }
+  .card .k i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .card.c-fetched .v { color: var(--green); }
+  .card.c-not_available .v { color: var(--violet); }
+
+  .tablecard { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+  .tablecard .toolbar { padding: 12px 14px; border-bottom: 1px solid var(--line-soft); }
+  .tablewrap { overflow: auto; max-height: 560px; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  thead th {
+    position: sticky; top: 0; background: var(--panel-2); color: var(--ink-dim); text-align: left;
+    font-weight: 600; font-size: 12px; padding: 9px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; z-index: 2;
+  }
+  tbody td { padding: 9px 12px; border-bottom: 1px solid var(--line-soft); vertical-align: middle; }
+  tbody tr:hover { background: var(--panel-2); }
+  tbody tr.sel { background: var(--accent-soft); }
+  td .nm { font-weight: 500; }
+  td .sp { font-size: 12px; color: var(--ink-faint); }
+  td.email a { color: var(--green); font-family: var(--mono); font-size: 12.5px; text-decoration: none; }
+  td.email a:hover { text-decoration: underline; }
+  .copy { appearance: none; border: none; background: none; cursor: pointer; color: var(--ink-faint); font-size: 12px; padding: 2px 6px; border-radius: 4px; }
+  .copy:hover { background: var(--line-soft); color: var(--ink); }
+  .pill { font-size: 11.5px; font-weight: 500; padding: 2px 8px; border-radius: 100px; white-space: nowrap; }
+  .pill.fetched { background: var(--green-soft); color: var(--green); }
+  .pill.not_available { background: var(--violet-soft); color: var(--violet); }
+  .pill.not_fetched { background: var(--line-soft); color: var(--ink-dim); }
+  input[type=checkbox] { accent-color: var(--accent); width: 15px; height: 15px; cursor: pointer; vertical-align: middle; }
+  .empty { padding: 40px; text-align: center; color: var(--ink-faint); font-size: 13px; }
+  .tfoot { padding: 10px 14px; font-size: 12px; color: var(--ink-faint); border-top: 1px solid var(--line-soft); }
+
+  .banner { border-radius: var(--radius); padding: 12px 14px; font-size: 13px; margin-bottom: 14px; border: 1px solid; }
+  .banner.warn { background: var(--amber-soft); border-color: #fbd38d; color: #7c4a03; }
+  .banner.ok { background: var(--green-soft); border-color: #a6e9c1; color: #14532d; }
+  .banner.run { background: var(--accent-soft); border-color: #c7d7fe; color: #1e3a8a; }
+  .banner b { font-weight: 600; }
+  .banner .found { margin-top: 6px; font-family: var(--mono); font-size: 12.5px; }
+  .banner .x { float: right; cursor: pointer; border: none; background: none; color: inherit; font-size: 16px; line-height: 1; }
+
+  .toast {
+    position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); background: #101828; color: #fff;
+    border-radius: var(--radius); padding: 10px 16px; font-size: 13px; box-shadow: 0 10px 30px rgba(16,24,40,.25);
+    z-index: 50; opacity: 0; transition: opacity .25s, transform .25s; pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(-4px); }
+  .toast.err { background: #b42318; }
+  .spinner { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,.4); border-top-color: #fff; border-radius: 50%; display: inline-block; animation: spin .7s linear infinite; }
+  .spinner.dark { border-color: #c7d7fe; border-top-color: var(--accent); }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+  <header class="topbar">
+    <span class="brand">Outreach Console</span>
+    <nav class="steps">
+      <button class="steptab" data-step="1"><span class="n">1</span> Fetch prospects</button>
+      <button class="steptab active" data-step="2"><span class="n">2</span> Find emails</button>
+    </nav>
+    <span class="spacer"></span>
+    <span id="keystate" class="keystate">Apollo: checking…</span>
+  </header>
+
+  <main>
+    <!-- ============ STEP 1 ============ -->
+    <section id="view-1" class="view">
+      <h2 class="section">Fetch prospects by state</h2>
+      <p class="hint">Pull providers from the NPPES registry (with Medicare enrollment joined in) into
+        <span class="mono">data/prospects.csv</span>. Re-fetching a state is safe; rows are de-duplicated.</p>
+
+      <div class="panel">
+        <h3>Categories to fetch</h3>
+        <div class="ms" id="cat-ms">
+          <button type="button" class="ms-btn" id="cat-ms-btn"><span id="cat-ms-label">Select categories</span><span class="caret">▾</span></button>
+          <div class="ms-menu" id="cat-ms-menu" hidden></div>
+        </div>
+        <div class="chips" id="cat-chips"></div>
+      </div>
+
+      <div class="panel">
+        <div class="tracker">
+          <div class="stat total"><span class="v" id="t-total-prospects">0</span><span class="k">prospects collected</span></div>
+          <div class="stat done"><span class="v" id="t-done">0</span><span class="k">states done</span></div>
+          <div class="stat"><span class="v" id="t-pending">0</span><span class="k">states remaining</span></div>
+          <div class="stat"><span class="v" id="t-running">0</span><span class="k">running now</span></div>
+        </div>
+        <div class="progress-outer"><div class="progress-inner" id="progress-bar"></div></div>
+        <div class="muted" style="font-size:12px" id="progress-label"></div>
+      </div>
+
+      <div class="toolbar">
+        <button class="btn small" id="sel-all">Select all remaining</button>
+        <button class="btn small ghost" id="sel-none">Clear</button>
+        <span class="selcount" id="state-selcount">0 selected</span>
+        <span class="grow"></span>
+        <button class="btn primary" id="fetch-selected" disabled>Fetch selected states</button>
+      </div>
+      <div class="state-grid" id="state-grid"></div>
+    </section>
+
+    <!-- ============ STEP 2 ============ -->
+    <section id="view-2" class="view active">
+      <div id="apollo-warning" class="banner warn" style="display:none">
+        <b>No Apollo API key.</b> Set <span class="mono">APOLLO_API_KEY</span> in <span class="mono">core/config.py</span> and restart the server.
+      </div>
+
+      <div class="s2">
+        <!-- categories -->
+        <aside class="cats">
+          <div class="cats-head">
+            <div class="t"><span>Categories</span><span class="muted" style="font-size:12px;font-weight:400" id="cat-count"></span></div>
+            <input type="text" id="cat-search" placeholder="Filter categories" />
+          </div>
+          <div class="cat-list" id="cat-list"></div>
+        </aside>
+
+        <!-- workspace -->
+        <div>
+          <div class="work-head">
+            <div>
+              <h2 id="cat-title">All categories</h2>
+              <div class="sub" id="cat-sub"></div>
+            </div>
+            <span class="spacer"></span>
+            <button class="btn" id="export-btn" title="Download found emails as CSV">Export emails (CSV)</button>
+          </div>
+
+          <div class="cards">
+            <button class="card c-all" data-bucket=""><div class="v" id="k-total">0</div><div class="k">Total prospects</div></button>
+            <button class="card c-not_fetched" data-bucket="not_fetched"><div class="v" id="k-not_fetched">0</div><div class="k"><i style="background:#cbd2dc"></i>Not checked</div></button>
+            <button class="card c-fetched" data-bucket="fetched"><div class="v" id="k-fetched">0</div><div class="k"><i style="background:#22c55e"></i>Emails found</div></button>
+            <button class="card c-not_available" data-bucket="not_available"><div class="v" id="k-not_available">0</div><div class="k"><i style="background:#a78bfa"></i>No email</div></button>
+          </div>
+
+          <div id="run-banner"></div>
+
+          <div class="tablecard">
+            <div class="toolbar">
+              <input type="text" id="row-search" placeholder="Search name, NPI, city…" style="width:220px" />
+              <select id="row-state-filter"><option value="">All states</option></select>
+              <span class="grow"></span>
+              <span class="selcount" id="row-selcount">0 selected</span>
+              <button class="btn small" id="pick-10">Select 10</button>
+              <button class="btn small" id="pick-50">Select 50</button>
+              <button class="btn small ghost" id="rows-clear">Clear</button>
+              <button class="btn primary" id="enrich-selected" disabled>Find emails</button>
+            </div>
+            <div class="tablewrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th style="width:36px"><input type="checkbox" id="rows-check-all" title="Select all shown" /></th>
+                    <th>Name</th><th>Location</th><th>Medicare</th><th>Status</th><th>Email</th>
+                  </tr>
+                </thead>
+                <tbody id="rows-body"></tbody>
+              </table>
+            </div>
+            <div class="tfoot" id="rows-meta"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+const $ = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
+const api = async (url, opts) => {
+  const r = await fetch(url, opts);
+  if (!r.ok) { let m = r.statusText; try { m = (await r.json()).error || m; } catch(e){} throw new Error(m); }
+  return r.json();
+};
+const esc = s => (s == null ? '' : String(s)).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmt = n => Number(n || 0).toLocaleString();
+const titleCase = s => (s || '').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+let toastTimer;
+function toast(msg, kind='') {
+  const t = $('#toast'); t.textContent = msg; t.className = 'toast show ' + kind;
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.className = 'toast', 3500);
+}
+
+/* ---------- step switching ---------- */
+function showStep(step) {
+  $$('.steptab').forEach(x => x.classList.toggle('active', x.dataset.step === step));
+  $$('.view').forEach(v => v.classList.toggle('active', v.id === 'view-' + step));
+  if (step === '2') { loadCategories(); loadRows(); }
+  if (step === '1') refreshStates();
+}
+$$('.steptab').forEach(b => b.addEventListener('click', () => showStep(b.dataset.step)));
+
+/* ---------- config / key ---------- */
+async function loadConfig() {
+  try {
+    const c = await api('/api/config');
+    const ks = $('#keystate');
+    ks.textContent = c.apollo_key_set ? 'Apollo connected' : 'Apollo: no key';
+    ks.className = 'keystate ' + (c.apollo_key_set ? 'on' : 'off');
+    $('#apollo-warning').style.display = c.apollo_key_set ? 'none' : 'block';
+  } catch(e) { toast('Config load failed: ' + e.message, 'err'); }
+}
+
+/* =================== STEP 1 =================== */
+async function loadTaxonomyHints() {
+  try {
+    const d = await api('/api/taxonomy-hints');
+    const dl = $('#taxonomy-list'); dl.innerHTML = '';
+    d.hints.forEach(h => { if (h) { const o = document.createElement('option'); o.value = h; dl.appendChild(o); } });
+    $('#taxonomy-input').value = d.current || '';
+    renderTaxonomyCurrent(d.current || '');
+  } catch(e) {}
+}
+function renderTaxonomyCurrent(v) {
+  $('#taxonomy-current').textContent = v ? ('Active filter: ' + v) : 'Active filter: none (all providers)';
+}
+$('#save-taxonomy').addEventListener('click', async () => {
+  try {
+    const v = $('#taxonomy-input').value.trim();
+    const d = await api('/api/taxonomy', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({taxonomy: v})});
+    renderTaxonomyCurrent(d.nppes_taxonomy);
+    toast('Filter applied');
+  } catch(e) { toast('Failed: ' + e.message, 'err'); }
+});
+
+const selectedStates = new Set();
+let statesData = [];
+let liveRunning = new Set();
+let pollTimer = null;
+
+function renderStates() {
+  const grid = $('#state-grid'); grid.innerHTML = '';
+  statesData.forEach(s => {
+    const running = liveRunning.has(s.code);
+    const status = (s.status === 'running' && !running) ? 'pending' : s.status;
+    const cell = document.createElement('div');
+    cell.className = 'scell' + (selectedStates.has(s.code) ? ' selected' : '');
+    const meta = status === 'done' ? (s.count > 0 ? fmt(s.count) + ' rows' : '0 rows — check filter')
+      : running ? 'fetching…' : status === 'error' ? 'error' : 'not fetched';
+    cell.innerHTML = `<span class="dot ${running ? 'running' : status}"></span>` +
+      `<span class="code">${s.code}</span><span class="nm">${esc(s.name)}</span><span class="meta">${meta}</span>`;
+    cell.addEventListener('click', () => {
+      if (running) return;
+      selectedStates.has(s.code) ? selectedStates.delete(s.code) : selectedStates.add(s.code);
+      renderStates(); updateStateSel();
+    });
+    grid.appendChild(cell);
+  });
+}
+function updateStateSel() {
+  $('#state-selcount').textContent = selectedStates.size + ' selected';
+  $('#fetch-selected').disabled = selectedStates.size === 0;
+}
+function renderTracker(sum) {
+  $('#t-total-prospects').textContent = fmt(sum.total_prospects);
+  $('#t-done').textContent = sum.done_states;
+  $('#t-pending').textContent = sum.pending_states;
+  $('#t-running').textContent = (sum.running || []).length;
+  const pct = sum.total_states ? Math.round(sum.done_states / sum.total_states * 100) : 0;
+  $('#progress-bar').style.width = pct + '%';
+  $('#progress-label').textContent = `${sum.done_states} of ${sum.total_states} states done (${pct}%)`;
+}
+async function refreshStates() {
+  try {
+    const sum = await api('/api/states');
+    statesData = sum.states;
+    liveRunning = new Set(sum.running || []);
+    renderTracker(sum); renderStates(); fillStateFilter();
+    const anyRunning = liveRunning.size > 0;
+    if (anyRunning && !pollTimer) pollTimer = setInterval(refreshStates, 2500);
+    if (!anyRunning && pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+  } catch(e) { toast('States load failed: ' + e.message, 'err'); }
+}
+$('#sel-all').addEventListener('click', () => {
+  statesData.forEach(s => { if (s.status !== 'done' && !liveRunning.has(s.code)) selectedStates.add(s.code); });
+  renderStates(); updateStateSel();
+});
+$('#sel-none').addEventListener('click', () => { selectedStates.clear(); renderStates(); updateStateSel(); });
+$('#fetch-selected').addEventListener('click', async () => {
+  const states = Array.from(selectedStates);
+  if (!states.length) return;
+  let tax = $('#taxonomy-input').value.trim();
+  if (tax) {
+    try {
+      const pr = await api('/api/probe?state=' + encodeURIComponent(states[0]) + '&taxonomy=' + encodeURIComponent(tax));
+      if (pr.suggested) {
+        if (confirm(`"${tax}" matched 0 in ${states[0]}, but "${pr.suggested}" works.\n\nUse "${pr.suggested}" instead?`)) {
+          tax = pr.suggested; $('#taxonomy-input').value = tax;
+        }
+      } else if (pr.warning && !confirm(pr.warning + '\n\nFetch anyway?')) return;
+    } catch(e) {}
+  }
+  try {
+    const d = await api('/api/fetch', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({states, taxonomy: tax})});
+    toast(`Started: ${d.started.join(', ') || 'none'}` + (tax ? ` · ${tax}` : ' · all providers'));
+    renderTaxonomyCurrent(tax);
+    selectedStates.clear(); updateStateSel(); refreshStates();
+  } catch(e) { toast('Fetch failed: ' + e.message, 'err'); }
+});
+
+/* =================== STEP 2 =================== */
+let categories = [];
+let overall = null;
+let activeCategory = '';
+let activeBucket = 'not_fetched';
+let shownRows = [];
+const selectedRows = new Set();
+
+/* ---- categories ---- */
+async function loadCategories() {
+  try {
+    const d = await api('/api/categories');
+    categories = d.categories; overall = d.summary;
+    renderCategories(); renderCards();
+  } catch(e) { toast('Categories load failed: ' + e.message, 'err'); }
+}
+function catItem(c, label) {
+  const f = c.total ? c.fetched / c.total * 100 : 0;
+  const n = c.total ? c.not_available / c.total * 100 : 0;
+  const key = label ? '' : c.category;
+  const b = document.createElement('button');
+  b.className = 'cat' + (key === activeCategory ? ' active' : '');
+  b.innerHTML = `<div class="top"><span class="nm" title="${esc(label || c.category)}">${esc(label || c.category)}</span>` +
+    (c.fetched ? `<span class="em">${fmt(c.fetched)} ✉</span>` : '') +
+    `<span class="tot">${fmt(c.total)}</span></div>` +
+    `<div class="bar"><span class="f" style="width:${f}%"></span><span class="n" style="width:${n}%"></span></div>`;
+  b.addEventListener('click', () => selectCategory(key));
+  return b;
+}
+function renderCategories() {
+  const list = $('#cat-list'); list.innerHTML = '';
+  const q = $('#cat-search').value.trim().toLowerCase();
+  if (overall && !q) list.appendChild(catItem({...overall, category: ''}, 'All categories'));
+  const shown = categories.filter(c => !q || c.category.toLowerCase().includes(q));
+  shown.forEach(c => list.appendChild(catItem(c)));
+  if (!shown.length) list.insertAdjacentHTML('beforeend', '<div class="empty" style="padding:20px">No match</div>');
+  $('#cat-count').textContent = categories.length + ' total';
+}
+$('#cat-search').addEventListener('input', renderCategories);
+
+function currentStats() {
+  if (!activeCategory) return overall || {total:0, fetched:0, not_available:0, not_fetched:0};
+  return categories.find(c => c.category === activeCategory) || {total:0, fetched:0, not_available:0, not_fetched:0};
+}
+function renderCards() {
+  const s = currentStats();
+  $('#k-total').textContent = fmt(s.total);
+  $('#k-not_fetched').textContent = fmt(s.not_fetched);
+  $('#k-fetched').textContent = fmt(s.fetched);
+  $('#k-not_available').textContent = fmt(s.not_available);
+  $$('.card').forEach(c => c.classList.toggle('active', c.dataset.bucket === activeBucket));
+  $('#cat-title').textContent = activeCategory || 'All categories';
+  const pct = s.total ? Math.round((s.fetched + s.not_available) / s.total * 100) : 0;
+  $('#cat-sub').textContent = `${pct}% checked · ${fmt(s.fetched)} email${s.fetched === 1 ? '' : 's'} found`;
+  $('#export-btn').disabled = !s.fetched;
+}
+function selectCategory(cat) {
+  activeCategory = cat;
+  selectedRows.clear(); updateRowSel();
+  renderCategories(); renderCards(); loadRows();
+}
+$$('.card').forEach(c => c.addEventListener('click', () => {
+  activeBucket = c.dataset.bucket; renderCards(); loadRows();
+}));
+$('#export-btn').addEventListener('click', () => {
+  window.location = '/api/export' + (activeCategory ? '?category=' + encodeURIComponent(activeCategory) : '');
+});
+
+/* ---- rows ---- */
+let stateFilterFilled = false;
+function fillStateFilter() {
+  if (stateFilterFilled || !statesData.length) return;
+  const sel = $('#row-state-filter');
+  statesData.filter(s => s.count > 0).forEach(s => {
+    const o = document.createElement('option'); o.value = s.code; o.textContent = `${s.code} — ${s.name}`; sel.appendChild(o);
+  });
+  stateFilterFilled = true;
+}
+
+async function loadRows() {
+  try {
+    const params = new URLSearchParams({
+      search: $('#row-search').value.trim(),
+      state: $('#row-state-filter').value,
+      bucket: activeBucket,
+      category: activeCategory,
+      limit: '500',
+    });
+    const d = await api('/api/rows?' + params);
+    shownRows = d.rows;
+    renderRows();
+    $('#rows-meta').textContent = d.total_matching > d.returned
+      ? `Showing first ${fmt(d.returned)} of ${fmt(d.total_matching)} — narrow with search or state to see more.`
+      : `${fmt(d.total_matching)} row${d.total_matching === 1 ? '' : 's'}`;
+  } catch(e) { toast('Rows load failed: ' + e.message, 'err'); }
+}
+const canSelect = r => r.bucket !== 'fetched';
+function statusPill(r) {
+  const label = r.bucket === 'fetched' ? (r.email_status === 'unverified' ? 'Found (unverified)' : 'Found')
+    : r.bucket === 'not_available' ? 'No email' : 'Not checked';
+  return `<span class="pill ${r.bucket}">${label}</span>`;
+}
+function renderRows() {
+  const body = $('#rows-body'); body.innerHTML = '';
+  if (!shownRows.length) {
+    const msg = activeBucket === 'fetched' ? 'No emails found in this category yet. Go to “Not checked”, select rows and click Find emails.'
+      : activeBucket === 'not_fetched' ? 'Everything in this category has been checked.' : 'No rows match.';
+    body.innerHTML = `<tr><td colspan="6"><div class="empty">${msg}</div></td></tr>`;
+    $('#rows-check-all').checked = false;
+    return;
+  }
+  const frag = document.createDocumentFragment();
+  shownRows.forEach(r => {
+    const tr = document.createElement('tr');
+    const sel = selectedRows.has(r.index);
+    if (sel) tr.className = 'sel';
+    const spec = r.taxonomy && r.taxonomy !== r.category ? r.taxonomy.replace(r.category + ', ', '') : r.category;
+    tr.innerHTML =
+      `<td>${canSelect(r) ? `<input type="checkbox" data-idx="${r.index}" ${sel ? 'checked' : ''}>` : ''}</td>` +
+      `<td><div class="nm">${esc(titleCase(r.name))}</div><div class="sp">${esc(spec)}${r.entity_type === 'organization' ? ' · organization' : ''}</div></td>` +
+      `<td>${esc(titleCase(r.city))}, ${esc(r.state)}</td>` +
+      `<td>${r.medicare_enrolled === 'YES' ? 'Yes' : r.medicare_enrolled === 'NO' ? 'No' : '—'}</td>` +
+      `<td>${statusPill(r)}</td>` +
+      `<td class="email">${r.email ? `<a href="mailto:${esc(r.email)}">${esc(r.email)}</a> <button class="copy" data-email="${esc(r.email)}">Copy</button>` : ''}</td>`;
+    frag.appendChild(tr);
+  });
+  body.appendChild(frag);
+  const selectable = shownRows.filter(canSelect);
+  $('#rows-check-all').checked = selectable.length > 0 && selectable.every(r => selectedRows.has(r.index));
+}
+$('#rows-body').addEventListener('change', e => {
+  const cb = e.target.closest('input[type=checkbox]'); if (!cb) return;
+  const idx = parseInt(cb.dataset.idx, 10);
+  cb.checked ? selectedRows.add(idx) : selectedRows.delete(idx);
+  cb.closest('tr').classList.toggle('sel', cb.checked);
+  updateRowSel();
+});
+$('#rows-body').addEventListener('click', async e => {
+  const b = e.target.closest('.copy'); if (!b) return;
+  try { await navigator.clipboard.writeText(b.dataset.email); toast('Copied ' + b.dataset.email); }
+  catch(err) { toast('Copy failed', 'err'); }
+});
+function updateRowSel() {
+  const n = selectedRows.size;
+  $('#row-selcount').textContent = n ? `${n} selected · up to ${n} credit${n === 1 ? '' : 's'}` : '0 selected';
+  $('#enrich-selected').disabled = n === 0;
+}
+function pickFirst(n) {
+  selectedRows.clear();
+  shownRows.filter(canSelect).slice(0, n).forEach(r => selectedRows.add(r.index));
+  renderRows(); updateRowSel();
+}
+$('#pick-10').addEventListener('click', () => pickFirst(10));
+$('#pick-50').addEventListener('click', () => pickFirst(50));
+$('#rows-clear').addEventListener('click', () => { selectedRows.clear(); renderRows(); updateRowSel(); });
+$('#rows-check-all').addEventListener('change', e => {
+  shownRows.filter(canSelect).forEach(r => e.target.checked ? selectedRows.add(r.index) : selectedRows.delete(r.index));
+  renderRows(); updateRowSel();
+});
+let searchTimer;
+$('#row-search').addEventListener('input', () => { clearTimeout(searchTimer); searchTimer = setTimeout(loadRows, 300); });
+$('#row-state-filter').addEventListener('change', loadRows);
+
+/* ---- enrichment ---- */
+function runBanner(html, kind) {
+  $('#run-banner').innerHTML = html ? `<div class="banner ${kind}">${html}</div>` : '';
+}
+$('#run-banner').addEventListener('click', e => { if (e.target.closest('.x')) runBanner(''); });
+
+$('#enrich-selected').addEventListener('click', async () => {
+  const indices = Array.from(selectedRows);
+  if (!indices.length) return;
+  if (indices.length > 50 && !confirm(`Check ${indices.length} rows? This can use up to ${indices.length} Apollo credits (only emails found are charged).`)) return;
+  const btn = $('#enrich-selected');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Searching…';
+  runBanner(`<span class="spinner dark"></span>&nbsp; Checking <b>${indices.length}</b> prospect${indices.length === 1 ? '' : 's'} in Apollo — about 1 second each. Keep this page open.`, 'run');
+  try {
+    const d = await api('/api/enrich', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({indices})});
+    const found = d.fetched.filter(r => indices.includes(r.index));
+    const list = found.length ? `<div class="found">${found.map(r => `${esc(titleCase(r.name))} — ${esc(r.email)}`).join('<br>')}</div>` : '';
+    runBanner(`<button class="x" title="Dismiss">×</button><b>Done.</b> Checked ${d.attempted} · <b>${found.length} email${found.length === 1 ? '' : 's'} found</b> · ` +
+      `${d.not_available.length} with no email · ${d.not_fetched.length} errors · ~${d.credits_estimate} credit${d.credits_estimate === 1 ? '' : 's'} used${list}`,
+      found.length ? 'ok' : 'warn');
+    selectedRows.clear(); updateRowSel();
+    await loadCategories();
+    loadRows();
+  } catch(e) {
+    runBanner(`<button class="x">×</button><b>Enrichment failed:</b> ${esc(e.message)}`, 'warn');
+  } finally {
+    btn.textContent = 'Find emails'; updateRowSel();
+  }
+});
+
+/* ---------- boot ---------- */
+loadConfig();
+loadTaxonomyHints();
+refreshStates();
+loadCategories().then(() => {
+  // Open on the found emails if there are any, so they're visible right away.
+  if (overall && overall.fetched) activeBucket = 'fetched';
+  renderCards(); loadRows();
+});
+</script>
+</body>
+</html>

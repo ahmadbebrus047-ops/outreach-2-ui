@@ -1,0 +1,37 @@
+2026-10-11 10:59:36,592 | INFO    | webapp | Starting web GUI on http://127.0.0.1:5000
+WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on http://127.0.0.1:5000
+Press CTRL+C to quit
+127.0.0.1 - - [11/Oct/2026 10:59:39] "GET /api/categories HTTP/1.1" 200 -
+127.0.0.1 - - [11/Oct/2026 10:59:39] "GET /api/rows?bucket=fetched HTTP/1.1" 200 -
+127.0.0.1 - - [11/Oct/2026 10:59:39] "GET /api/export?category=Internal%20Medicine HTTP/1.1" 200 -
+127.0.0.1 - - [11/Oct/2026 10:59:39] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [11/Oct/2026 11:00:14] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [11/Oct/2026 11:00:14] "GET /api/config HTTP/1.1" 200 -
+127.0.0.1 - - [11/Oct/2026 11:00:14] "GET /api/taxonomy-hints HTTP/1.1" 200 -
+127.0.0.1 - - [11/Oct/2026 11:00:14] "GET /api/states HTTP/1.1" 200 -
+127.0.0.1 - - [11/Oct/2026 11:00:14] "GET /api/categories HTTP/1.1" 200 -
+127.0.0.1 - - [11/Oct/2026 11:00:14] "GET /api/rows?search=&state=&bucket=fetched&category=&limit=500 HTTP/1.1" 200 -
+127.0.0.1 - - [11/Oct/2026 11:00:18] "GET /api/states HTTP/1.1" 200 -
+127.0.0.1 - - [11/Oct/2026 11:00:19] "GET /api/categories HTTP/1.1" 200 -
+127.0.0.1 - - [11/Oct/2026 11:00:20] "GET /api/rows?search=&state=&bucket=fetched&category=&limit=500 HTTP/1.1" 200 -
+127.0.0.1 - - [11/Oct/2026 11:00:24] "GET /api/rows?search=&state=&bucket=&category=&limit=500 HTTP/1.1" 200 -
+127.0.0.1 - - [11/Oct/2026 11:00:26] "GET /api/rows?search=&state=&bucket=&category=Internal+Medicine&limit=500 HTTP/1.1" 200 -
+127.0.0.1 - - [11/Oct/2026 11:00:29] "GET /api/rows?search=&state=&bucket=&category=Family+Medicine&limit=500 HTTP/1.1" 200 -
+127.0.0.1 - - [11/Oct/2026 11:00:33] "GET /api/rows?search=&state=&bucket=&category=&limit=500 HTTP/1.1" 200 -
+127.0.0.1 - - [11/Oct/2026 11:00:35] "GET /api/rows?search=&state=&bucket=not_available&category=&limit=500 HTTP/1.1" 200 -
+127.0.0.1 - - [11/Oct/2026 11:00:37] "GET /api/rows?search=&state=&bucket=not_fetched&category=&limit=500 HTTP/1.1" 200 -
+127.0.0.1 - - [11/Oct/2026 11:00:38] "GET /api/rows?search=&state=&bucket=fetched&category=&limit=500 HTTP/1.1" 200 -
+127.0.0.1 - - [11/Oct/2026 11:00:41] "GET /api/states HTTP/1.1" 200 -
+127.0.0.1 - - [11/Oct/2026 11:01:25] "GET / HTTP/1.1" 304 -
+127.0.0.1 - - [11/Oct/2026 11:01:25] "GET /api/config HTTP/1.1" 200 -
+127.0.0.1 - - [11/Oct/2026 11:01:25] "GET /api/taxonomy-hints HTTP/1.1" 200 -
+127.0.0.1 - - [11/Oct/2026 11:01:25] "GET /api/states HTTP/1.1" 200 -
+127.0.0.1 - - [11/Oct/2026 11:01:25] "GET /api/categories HTTP/1.1" 200 -
+127.0.0.1 - - [11/Oct/2026 11:01:25] "GET /api/rows?search=&state=&bucket=fetched&category=&limit=500 HTTP/1.1" 200 -
+127.0.0.1 - - [11/Oct/2026 11:01:27] "GET /api/rows?search=&state=&bucket=fetched&category=Internal+Medicine&limit=500 HTTP/1.1" 200 -
+127.0.0.1 - - [11/Oct/2026 11:01:51] "GET /api/rows?search=&state=&bucket=not_available&category=Internal+Medicine&limit=500 HTTP/1.1" 200 -
+127.0.0.1 - - [11/Oct/2026 11:01:52] "GET /api/rows?search=&state=&bucket=fetched&category=Internal+Medicine&limit=500 HTTP/1.1" 200 -
+127.0.0.1 - - [11/Oct/2026 11:01:52] "GET /api/rows?search=&state=&bucket=not_fetched&category=Internal+Medicine&limit=500 HTTP/1.1" 200 -
+127.0.0.1 - - [11/Oct/2026 11:01:53] "GET /api/rows?search=&state=&bucket=&category=Internal+Medicine&limit=500 HTTP/1.1" 200 -
+127.0.0.1 - - [11/Oct/2026 11:01:54] "GET /api/rows?search=&state=&bucket=fetched&category=Internal+Medicine&limit=500 HTTP/1.1" 200 -
